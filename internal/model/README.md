@@ -14,9 +14,9 @@ Models represent the core business objects and contain domain logic.
 
 ```text
 model/
-├── agent.go         # Agent domain model
 ├── launch.go        # Launch domain model
 ├── test.go          # Test item domain model
+├── log.go           # Log domain model
 └── errors.go        # Domain-specific errors (optional)
 ```
 
@@ -30,51 +30,43 @@ import (
     "time"
 )
 
-type AgentStatus string
+type EntityStatus string
 
 const (
-    AgentStatusActive   AgentStatus = "active"
-    AgentStatusInactive AgentStatus = "inactive"
+    EntityStatusActive   EntityStatus = "active"
+	EntityStatusInactive EntityStatus = "inactive"
 )
 
-type Agent struct {
-    ID        string      `json:"id" db:"id"`
-    Name      string      `json:"name" db:"name"`
-    Version   string      `json:"version" db:"version"`
-    Status    AgentStatus `json:"status" db:"status"`
-    CreatedAt time.Time   `json:"created_at" db:"created_at"`
-    UpdatedAt time.Time   `json:"updated_at" db:"updated_at"`
+type Entity struct {
+    ID        string       `json:"id"`
+    Name      string       `json:"name"`
+    Status    EntityStatus `json:"status"`
+    CreatedAt time.Time    `json:"created_at"`
+    UpdatedAt time.Time    `json:"updated_at"`
 }
 
-// Validate performs domain validation
-func (a *Agent) Validate() error {
+func (a *Entity) Validate() error {
     if a.Name == "" {
-        return errors.New("agent name is required")
+        return errors.New("name is required")
     }
     if len(a.Name) < 3 {
-        return errors.New("agent name must be at least 3 characters")
-    }
-    if a.Version == "" {
-        return errors.New("agent version is required")
+        return errors.New("name must be at least 3 characters")
     }
     return nil
 }
 
-// Activate sets the agent status to active
-func (a *Agent) Activate() {
-    a.Status = AgentStatusActive
+func (a *Entity) Activate() {
+    a.Status = EntityStatusActive
     a.UpdatedAt = time.Now()
 }
 
-// Deactivate sets the agent status to inactive
-func (a *Agent) Deactivate() {
-    a.Status = AgentStatusInactive
+func (a *Entity) Deactivate() {
+    a.Status = EntityStatusInactive
     a.UpdatedAt = time.Now()
 }
 
-// IsActive checks if agent is currently active
-func (a *Agent) IsActive() bool {
-    return a.Status == AgentStatusActive
+func (a *Entity) IsActive() bool {
+    return a.Status == EntityStatusActive
 }
 ```
 
@@ -83,13 +75,14 @@ func (a *Agent) IsActive() bool {
 Use struct tags for different purposes:
 
 - `json:` - JSON serialization/deserialization
-- `db:` - Database column mapping
 - `validate:` - Validation rules (if using validation library)
 
 ```go
+package model
+
 type Entity struct {
-    ID   string `json:"id" db:"id" validate:"required,uuid"`
-    Name string `json:"name" db:"name" validate:"required,min=3"`
+    ID   string `json:"id" validate:"required,uuid"`
+    Name string `json:"name" validate:"required,min=3"`
 }
 ```
 
