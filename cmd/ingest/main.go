@@ -14,10 +14,10 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	router := handler.NewRouter()
+	router := handler.NewRouter(cfg.Server.BasePath)
 
 	addr := cfg.Server.Addr()
-	log.Printf("Starting server on %s (env: %s)", addr, cfg.Server.Env)
+	log.Printf("Starting server on %s (env: %s, base path: %s)", addr, cfg.Server.Env, cfg.Server.BasePath)
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}

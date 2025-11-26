@@ -13,9 +13,10 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port int    `env:"PORT" envDefault:"8080"`
-	Host string `env:"HOST" envDefault:"0.0.0.0"`
-	Env  string `env:"ENVIRONMENT" envDefault:"development"`
+	Port     int    `env:"PORT" envDefault:"8080"`
+	Host     string `env:"HOST" envDefault:"0.0.0.0"`
+	Env      string `env:"ENVIRONMENT" envDefault:"development"`
+	BasePath string `env:"BASE_PATH" envDefault:"/api"`
 }
 
 type LogConfig struct {
