@@ -10,40 +10,40 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0
   version: 5.14.0
 servers:
-- url: /api
+  - url: /api
 security:
-- bearerAuth: []
+  - bearerAuth: [ ]
 tags:
-- name: Launch
-  description: Launches API collection
-- name: Launch Async
-  description: Launches Async API collection
-- name: Log Async
-  description: Logs Async API collection
-- name: Project Settings
-  description: Project Settings API collection
-- name: Settings
-  description: Settings API collection
-- name: Test Item
-  description: Test Items API collection
-- name: Test Item Async
-  description: Test Items Async API collection
+  - name: Launch
+    description: Launches API collection
+  - name: Launch Async
+    description: Launches Async API collection
+  - name: Log Async
+    description: Logs Async API collection
+  - name: Project Settings
+    description: Project Settings API collection
+  - name: Settings
+    description: Settings API collection
+  - name: Test Item
+    description: Test Items API collection
+  - name: Test Item Async
+    description: Test Items Async API collection
 paths:
-# Reporting paths
-# Launch endpoints
+  # Reporting paths
+  # Launch endpoints
   /v2/{projectName}/launch:
     # Start launch
     post:
       tags:
-      - Launch Async
+        - Launch Async
       summary: Starts launch for specified project
       operationId: startLaunch
       parameters:
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -61,16 +61,16 @@ paths:
     # Merge launches
     post:
       tags:
-      - Launch Async
+        - Launch Async
       summary: Merge set of specified launches in common one
       description: This operation merges a set of launches into a common one. The IDs of the launches to be merged should be provided in the 'launches' field of the request body.
       operationId: mergeLaunchesOldUuid
       parameters:
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -91,21 +91,21 @@ paths:
     # Finish launch
     put:
       tags:
-      - Launch Async
+        - Launch Async
       summary: Finish Launch
       description: Finish launch for specified project
       operationId: finishLaunch
       parameters:
-      - name: launchUuid
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: launchUuid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -123,20 +123,20 @@ paths:
     #  Get launch by UUID
     get:
       tags:
-      - Launch
+        - Launch
       summary: Get specified launch by UUID
       operationId: getLaunchByUuidOldTimestamp
       parameters:
-      - name: launchUuid
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: launchUuid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.launch.v2+json'' is used.'
@@ -147,25 +147,25 @@ paths:
             application/x.reportportal.launch.v2+json:
               schema:
                 $ref: '#/components/schemas/LaunchResource'
-  /v1/{projectName}/launch/{launchUuid}/update:
+  /v1/{projectName}/launch/{launchId}/update:
     # Update launch
     put:
       tags:
-      - Launch
+        - Launch
       summary: Updates launch for specified project
       operationId: updateLaunch
       parameters:
-      - name: launchUuid
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -180,21 +180,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/OperationCompletionRS'
 
-# Test Item endpoints
+  # Test Item endpoints
   /v2/{projectName}/item:
     # Start root item
     post:
       tags:
-      - Test Item Async
+        - Test Item Async
       summary: Start Root Item
       description: Start a root test item
       operationId: startRootItem_1
       parameters:
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -210,20 +210,20 @@ paths:
                 $ref: '#/components/schemas/EntryCreatedAsyncRS'
   /v2/{projectName}/item/{itemUuid}:
     parameters:
-    - name: itemUuid
-      in: path
-      required: true
-      schema:
-        type: string
-    - name: projectName
-      in: path
-      required: true
-      schema:
-        type: string
+      - name: itemUuid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
     # Start child item (container, step, nested step)
     post:
       tags:
-      - Test Item Async
+        - Test Item Async
       summary: Start Child Item
       description: Start a child test item
       operationId: startChildItem
@@ -243,7 +243,7 @@ paths:
     # Finish test item
     put:
       tags:
-      - Test Item Async
+        - Test Item Async
       summary: Finish Test Item
       description: Finish test item
       operationId: finishTestItem
@@ -264,20 +264,20 @@ paths:
     #  Get test item by UUID
     get:
       tags:
-      - Test Item
+        - Test Item
       summary: Find test item by UUID
       operationId: getTestItemByUuidTimestamp
       parameters:
-      - name: itemUuid
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: itemUuid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.test.v2+json'' is used.'
@@ -289,28 +289,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestItemResource'
 
-# Log endpoints
+  # Log endpoints
   /v2/{projectName}/log:
     # Create log
     post:
       tags:
-      - Log Async
+        - Log Async
       summary: Create Log
       description: Create log (batching operation)
       operationId: createLog
       parameters:
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           multipart/form-data:
             schema:
               type: object
               required:
-              - json_request_part
+                - json_request_part
               properties:
                 json_request_part:
                   type: array
@@ -328,16 +328,16 @@ paths:
   /v1/{projectName}/settings:
     get:
       tags:
-      - Project Settings
+        - Project Settings
       summary: Get project specific issue sub-types
       description: Only for users that are assigned to the project
       operationId: getProjectSettings
       parameters:
-      - name: projectName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -348,7 +348,7 @@ paths:
   /info:
     get:
       tags:
-      - Settings
+        - Settings
       summary: Get system info
       description: Get ReportPortal system information
       operationId: getSystemInfo
@@ -382,11 +382,11 @@ components:
         status:
           type: string
           enum:
-          - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
+            - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
         description:
           type: string
       required:
-      - endTime
+        - endTime
     ItemAttributesRQ:
       type: object
       properties:
@@ -400,7 +400,7 @@ components:
           type: boolean
           example: false
       required:
-      - value
+        - value
     FinishLaunchRS:
       type: object
       properties:
@@ -428,10 +428,10 @@ components:
         pluginName:
           type: string
       required:
-      - btsProject
-      - btsUrl
-      - ticketId
-      - url
+        - btsProject
+        - btsUrl
+        - ticketId
+        - url
     FinishTestItemRQ:
       type: object
       properties:
@@ -448,7 +448,7 @@ components:
         status:
           type: string
           enum:
-          - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
+            - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
         description:
           type: string
         issue:
@@ -462,8 +462,8 @@ components:
         retryOf:
           type: string
       required:
-      - endTime
-      - launchUuid
+        - endTime
+        - launchUuid
     Issue:
       type: object
       properties:
@@ -485,7 +485,7 @@ components:
           minItems: 0
           uniqueItems: true
       required:
-      - issueType
+        - issueType
     ItemAttributeResource:
       type: object
       properties:
@@ -496,14 +496,14 @@ components:
           maxLength: 2147483647
           minLength: 1
       required:
-      - value
+        - value
     UpdateLaunchRQ:
       type: object
       properties:
         mode:
           type: string
           enum:
-          - DEFAULT, DEBUG
+            - DEFAULT, DEBUG
         description:
           type: string
         attributes:
@@ -536,12 +536,12 @@ components:
         level:
           type: string
           enum:
-          - error, warn, info, debug, trace, fatal, unknown
+            - error, warn, info, debug, trace, fatal, unknown
         file:
           $ref: '#/components/schemas/File'
       required:
-      - launchUuid
-      - time
+        - launchUuid
+        - time
     BatchElementCreatedRS:
       type: object
       properties:
@@ -586,17 +586,17 @@ components:
         mode:
           type: string
           enum:
-          - DEFAULT
-          - DEBUG
+            - DEFAULT
+            - DEBUG
         rerun:
           type: boolean
         rerunOf:
           type: string
           description: UUID of desired launch to rerun
       required:
-      - name
-      - startTime
-      - uuid
+        - name
+        - startTime
+        - uuid
     StartLaunchRS:
       type: object
       properties:
@@ -626,8 +626,8 @@ components:
         mode:
           type: string
           enum:
-          - DEFAULT
-          - DEBUG
+            - DEFAULT
+            - DEBUG
         launches:
           type: array
           description: A set of IDs of the launches to be merged.
@@ -641,14 +641,14 @@ components:
         mergeType:
           type: string
           enum:
-          - BASIC, DEEP
+            - BASIC, DEEP
         extendSuitesDescription:
           type: boolean
       required:
-      - extendSuitesDescription
-      - launches
-      - mergeType
-      - name
+        - extendSuitesDescription
+        - launches
+        - mergeType
+        - name
     LaunchResourceOld:
       type: object
       properties:
@@ -691,8 +691,8 @@ components:
         mode:
           type: string
           enum:
-          - DEFAULT
-          - DEBUG
+            - DEFAULT
+            - DEBUG
         analysing:
           type: array
           items:
@@ -712,15 +712,15 @@ components:
         retentionPolicy:
           type: string
           enum:
-          - IMPORTANT
-          - REGULAR
+            - IMPORTANT
+            - REGULAR
       required:
-      - id
-      - name
-      - number
-      - startTime
-      - status
-      - uuid
+        - id
+        - name
+        - number
+        - startTime
+        - status
+        - uuid
     StatisticsResource:
       type: object
       properties:
@@ -778,8 +778,8 @@ components:
         mode:
           type: string
           enum:
-          - DEFAULT
-          - DEBUG
+            - DEFAULT
+            - DEBUG
         analysing:
           type: array
           items:
@@ -799,15 +799,15 @@ components:
         retentionPolicy:
           type: string
           enum:
-          - IMPORTANT
-          - REGULAR
+            - IMPORTANT
+            - REGULAR
       required:
-      - id
-      - name
-      - number
-      - startTime
-      - status
-      - uuid
+        - id
+        - name
+        - number
+        - startTime
+        - status
+        - uuid
     ParameterResource:
       type: object
       properties:
@@ -816,7 +816,7 @@ components:
         value:
           type: string
       required:
-      - key
+        - key
     StartTestItemRQ:
       type: object
       properties:
@@ -854,7 +854,7 @@ components:
         type:
           type: string
           enum:
-          - SUITE, STORY, TEST, SCENARIO, STEP, BEFORE_CLASS, BEFORE_GROUPS,BEFORE_METHOD, BEFORE_SUITE, BEFORE_TEST, AFTER_CLASS, AFTER_GROUPS, AFTER_METHOD, AFTER_SUITE, AFTER_TEST
+            - SUITE, STORY, TEST, SCENARIO, STEP, BEFORE_CLASS, BEFORE_GROUPS,BEFORE_METHOD, BEFORE_SUITE, BEFORE_TEST, AFTER_CLASS, AFTER_GROUPS, AFTER_METHOD, AFTER_SUITE, AFTER_TEST
         retry:
           type: boolean
         hasStats:
@@ -862,11 +862,11 @@ components:
         retryOf:
           type: string
       required:
-      - launchUuid
-      - name
-      - startTime
-      - type
-      - uuid
+        - launchUuid
+        - name
+        - startTime
+        - type
+        - uuid
     ItemPathName:
       type: object
       properties:
@@ -921,8 +921,8 @@ components:
             items:
               $ref: '#/components/schemas/IssueSubTypeResource'
       required:
-      - project
-      - subTypes
+        - project
+        - subTypes
     TestItemResource:
       type: object
       properties:
