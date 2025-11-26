@@ -1,0 +1,1064 @@
+openapi: 3.1.0
+info:
+  title: ReportPortal
+  description: ReportPortal API documentation
+  contact:
+    name: Support
+    email: support@reportportal.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  version: 5.14.0
+servers:
+- url: /api
+security:
+- bearerAuth: []
+tags:
+- name: Launch
+  description: Launches API collection
+- name: Launch Async
+  description: Launches Async API collection
+- name: Log Async
+  description: Logs Async API collection
+- name: Project Settings
+  description: Project Settings API collection
+- name: Settings
+  description: Settings API collection
+- name: Test Item
+  description: Test Items API collection
+- name: Test Item Async
+  description: Test Items Async API collection
+paths:
+# Reporting paths
+# Launch endpoints
+  /v2/{projectName}/launch:
+    # Start launch
+    post:
+      tags:
+      - Launch Async
+      summary: Starts launch for specified project
+      operationId: startLaunch
+      parameters:
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartLaunchRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartLaunchRS'
+  /v2/{projectName}/launch/merge:
+    # Merge launches
+    post:
+      tags:
+      - Launch Async
+      summary: Merge set of specified launches in common one
+      description: This operation merges a set of launches into a common one. The IDs of the launches to be merged should be provided in the 'launches' field of the request body.
+      operationId: mergeLaunchesOldUuid
+      parameters:
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeLaunchesRQ'
+        required: true
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.launch.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchResourceOld'
+            application/x.reportportal.launch.v2+json:
+              schema:
+                $ref: '#/components/schemas/LaunchResource'
+  /v2/{projectName}/launch/{launchUuid}/finish:
+    # Finish launch
+    put:
+      tags:
+      - Launch Async
+      summary: Finish Launch
+      description: Finish launch for specified project
+      operationId: finishLaunch
+      parameters:
+      - name: launchUuid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishExecutionRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishLaunchRS'
+  /v1/{projectName}/launch/uuid/{launchUuid}:
+    #  Get launch by UUID
+    get:
+      tags:
+      - Launch
+      summary: Get specified launch by UUID
+      operationId: getLaunchByUuidOldTimestamp
+      parameters:
+      - name: launchUuid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.launch.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchResourceOld'
+            application/x.reportportal.launch.v2+json:
+              schema:
+                $ref: '#/components/schemas/LaunchResource'
+  /v1/{projectName}/launch/{launchUuid}/update:
+    # Update launch
+    put:
+      tags:
+      - Launch
+      summary: Updates launch for specified project
+      operationId: updateLaunch
+      parameters:
+      - name: launchUuid
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLaunchRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+
+# Test Item endpoints
+  /v2/{projectName}/item:
+    # Start root item
+    post:
+      tags:
+      - Test Item Async
+      summary: Start Root Item
+      description: Start a root test item
+      operationId: startRootItem_1
+      parameters:
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+  /v2/{projectName}/item/{itemUuid}:
+    parameters:
+    - name: itemUuid
+      in: path
+      required: true
+      schema:
+        type: string
+    - name: projectName
+      in: path
+      required: true
+      schema:
+        type: string
+    # Start child item (container, step, nested step)
+    post:
+      tags:
+      - Test Item Async
+      summary: Start Child Item
+      description: Start a child test item
+      operationId: startChildItem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+    # Finish test item
+    put:
+      tags:
+      - Test Item Async
+      summary: Finish Test Item
+      description: Finish test item
+      operationId: finishTestItem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishTestItemRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/uuid/{itemUuid}:
+    #  Get test item by UUID
+    get:
+      tags:
+      - Test Item
+      summary: Find test item by UUID
+      operationId: getTestItemByUuidTimestamp
+      parameters:
+      - name: itemUuid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.test.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestItemResourceOld'
+            application/x.reportportal.test.v2+json:
+              schema:
+                $ref: '#/components/schemas/TestItemResource'
+
+# Log endpoints
+  /v2/{projectName}/log:
+    # Create log
+    post:
+      tags:
+      - Log Async
+      summary: Create Log
+      description: Create log (batching operation)
+      operationId: createLog
+      parameters:
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - json_request_part
+              properties:
+                json_request_part:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SaveLogRQ'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSaveOperatingRS'
+
+  # Discovery endpoints
+  /v1/{projectName}/settings:
+    get:
+      tags:
+      - Project Settings
+      summary: Get project specific issue sub-types
+      description: Only for users that are assigned to the project
+      operationId: getProjectSettings
+      parameters:
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectSettingsResource'
+  /info:
+    get:
+      tags:
+      - Settings
+      summary: Get system info
+      description: Get ReportPortal system information
+      operationId: getSystemInfo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    OperationCompletionRS:
+      type: object
+      properties:
+        message:
+          type: string
+    FinishExecutionRQ:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
+        description:
+          type: string
+      required:
+      - endTime
+    ItemAttributesRQ:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          maxLength: 2147483647
+          minLength: 1
+        system:
+          type: boolean
+          example: false
+      required:
+      - value
+    FinishLaunchRS:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+          format: int64
+        link:
+          type: string
+    ExternalSystemIssue:
+      type: object
+      properties:
+        ticketId:
+          type: string
+        submitDate:
+          type: string
+          format: date-time
+        btsUrl:
+          type: string
+        btsProject:
+          type: string
+        url:
+          type: string
+        pluginName:
+          type: string
+      required:
+      - btsProject
+      - btsUrl
+      - ticketId
+      - url
+    FinishTestItemRQ:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
+        description:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        retry:
+          type: boolean
+        launchUuid:
+          type: string
+        testCaseId:
+          type: string
+        retryOf:
+          type: string
+      required:
+      - endTime
+      - launchUuid
+    Issue:
+      type: object
+      properties:
+        issueType:
+          type: string
+        comment:
+          type: string
+          maxLength: 65536
+          minLength: 0
+        autoAnalyzed:
+          type: boolean
+        ignoreAnalyzer:
+          type: boolean
+        externalSystemIssues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSystemIssue'
+          maxItems: 300
+          minItems: 0
+          uniqueItems: true
+      required:
+      - issueType
+    ItemAttributeResource:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          maxLength: 2147483647
+          minLength: 1
+      required:
+      - value
+    UpdateLaunchRQ:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - DEFAULT, DEBUG
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+    File:
+      type: object
+      properties:
+        name:
+          type: string
+    SaveLogRQ:
+      type: object
+      properties:
+        itemUuid:
+          type: string
+          description: UUID of test item owned this log
+        uuid:
+          type: string
+        launchUuid:
+          type: string
+        time:
+          type: string
+          format: date-time
+        message:
+          type: string
+        level:
+          type: string
+          enum:
+          - error, warn, info, debug, trace, fatal, unknown
+        file:
+          $ref: '#/components/schemas/File'
+      required:
+      - launchUuid
+      - time
+    BatchElementCreatedRS:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+        stackTrace:
+          type: string
+    BatchSaveOperatingRS:
+      type: object
+      properties:
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchElementCreatedRS'
+    EntryCreatedAsyncRS:
+      type: object
+      properties:
+        id:
+          type: string
+    StartLaunchRQ:
+      type: object
+      description: Start launch request body
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        uuid:
+          type: string
+        mode:
+          type: string
+          enum:
+          - DEFAULT
+          - DEBUG
+        rerun:
+          type: boolean
+        rerunOf:
+          type: string
+          description: UUID of desired launch to rerun
+      required:
+      - name
+      - startTime
+      - uuid
+    StartLaunchRS:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+          format: int64
+    MergeLaunchesRQ:
+      type: object
+      description: Merge launches request body
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        startTime:
+          type: string
+          format: date-time
+        mode:
+          type: string
+          enum:
+          - DEFAULT
+          - DEBUG
+        launches:
+          type: array
+          description: A set of IDs of the launches to be merged.
+          items:
+            type: integer
+            format: int64
+          uniqueItems: true
+        endTime:
+          type: string
+          format: date-time
+        mergeType:
+          type: string
+          enum:
+          - BASIC, DEEP
+        extendSuitesDescription:
+          type: boolean
+      required:
+      - extendSuitesDescription
+      - launches
+      - mergeType
+      - name
+    LaunchResourceOld:
+      type: object
+      properties:
+        owner:
+          type: string
+        description:
+          type: string
+          maxLength: 2048
+          minLength: 0
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+          maxLength: 256
+          minLength: 3
+        number:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        mode:
+          type: string
+          enum:
+          - DEFAULT
+          - DEBUG
+        analysing:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        approximateDuration:
+          type: number
+          format: double
+        hasRetries:
+          type: boolean
+        rerun:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        retentionPolicy:
+          type: string
+          enum:
+          - IMPORTANT
+          - REGULAR
+      required:
+      - id
+      - name
+      - number
+      - startTime
+      - status
+      - uuid
+    StatisticsResource:
+      type: object
+      properties:
+        executions:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        defects:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int32
+    LaunchResource:
+      type: object
+      properties:
+        owner:
+          type: string
+        description:
+          type: string
+          maxLength: 2048
+          minLength: 0
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+          maxLength: 256
+          minLength: 3
+        number:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        mode:
+          type: string
+          enum:
+          - DEFAULT
+          - DEBUG
+        analysing:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        approximateDuration:
+          type: number
+          format: double
+        hasRetries:
+          type: boolean
+        rerun:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        retentionPolicy:
+          type: string
+          enum:
+          - IMPORTANT
+          - REGULAR
+      required:
+      - id
+      - name
+      - number
+      - startTime
+      - status
+      - uuid
+    ParameterResource:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+      - key
+    StartTestItemRQ:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        launchUuid:
+          type: string
+          description: UUID of parent launch
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        uuid:
+          type: string
+        codeRef:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterResource'
+        uniqueId:
+          type: string
+          maxLength: 1024
+          minLength: 0
+        testCaseId:
+          type: string
+        type:
+          type: string
+          enum:
+          - SUITE, STORY, TEST, SCENARIO, STEP, BEFORE_CLASS, BEFORE_GROUPS,BEFORE_METHOD, BEFORE_SUITE, BEFORE_TEST, AFTER_CLASS, AFTER_GROUPS, AFTER_METHOD, AFTER_SUITE, AFTER_TEST
+        retry:
+          type: boolean
+        hasStats:
+          type: boolean
+        retryOf:
+          type: string
+      required:
+      - launchUuid
+      - name
+      - startTime
+      - type
+      - uuid
+    ItemPathName:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    LaunchPathName:
+      type: object
+      properties:
+        name:
+          type: string
+        number:
+          type: integer
+          format: int32
+    PathNameResource:
+      type: object
+      properties:
+        launchPathName:
+          $ref: '#/components/schemas/LaunchPathName'
+        itemPaths:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPathName'
+    IssueSubTypeResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        locator:
+          type: string
+        typeRef:
+          type: string
+        longName:
+          type: string
+        shortName:
+          type: string
+        color:
+          type: string
+    ProjectSettingsResource:
+      type: object
+      properties:
+        project:
+          type: integer
+          format: int64
+        subTypes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/IssueSubTypeResource'
+      required:
+      - project
+      - subTypes
+    TestItemResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+        codeRef:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        type:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        parent:
+          type: integer
+          format: int64
+        pathNames:
+          $ref: '#/components/schemas/PathNameResource'
+        launchStatus:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        hasChildren:
+          type: boolean
+        hasStats:
+          type: boolean
+        launchId:
+          type: integer
+          format: int64
+        uniqueId:
+          type: string
+        testCaseId:
+          type: string
+        testCaseHash:
+          type: integer
+          format: int32
+        patternTemplates:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        path:
+          type: string
+    TestItemResourceOld:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+        codeRef:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        type:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        parent:
+          type: integer
+          format: int64
+        pathNames:
+          $ref: '#/components/schemas/PathNameResource'
+        launchStatus:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        hasChildren:
+          type: boolean
+        hasStats:
+          type: boolean
+        launchId:
+          type: integer
+          format: int64
+        uniqueId:
+          type: string
+        testCaseId:
+          type: string
+        testCaseHash:
+          type: integer
+          format: int32
+        patternTemplates:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        retries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestItemResource'
+        path:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
