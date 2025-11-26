@@ -1,0 +1,7000 @@
+openapi: 3.1.0
+info:
+  title: ReportPortal
+  description: ReportPortal API documentation
+  contact:
+    name: Support
+    email: support@reportportal.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  version: 5.14.0
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+tags:
+  - name: Launch
+    description: Launches API collection
+  - name: Launch Async
+    description: Launches Async API collection
+  - name: Log
+    description: Logs API collection
+  - name: Log Async
+    description: Logs Async API collection
+  - name: Project Settings
+    description: Project Settings API collection
+  - name: Settings
+    description: Settings API collection
+  - name: Test Item
+    description: Test Items API collection
+  - name: Test Item Async
+    description: Test Items Async API collection
+paths:
+  # Reporting paths
+  /v2/{projectName}/launch:
+    # Start launch
+    post:
+      tags:
+        - Launch Async
+      summary: Starts launch for specified project
+      operationId: startLaunch
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartLaunchRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartLaunchRS'
+  /v2/{projectName}/launch/merge:
+    # Merge launches
+    post:
+      tags:
+        - Launch Async
+      summary: Merge set of specified launches in common one
+      description: This operation merges a set of launches into a common one. The IDs of the launches to be merged should be provided in the 'launches' field of the request body.
+      operationId: mergeLaunchesOldUuid
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeLaunchesRQ'
+        required: true
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.launch.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchResourceOld'
+            application/x.reportportal.launch.v2+json:
+              schema:
+                $ref: '#/components/schemas/LaunchResource'
+  /v2/{projectName}/launch/{launchUuid}/finish:
+    # Finish launch
+    put:
+      tags:
+        - Launch Async
+      summary: Finish Launch
+      description: Finish launch for specified project
+      operationId: finishLaunch
+      parameters:
+        - name: launchUuid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishExecutionRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishLaunchRS'
+  /v2/{projectName}/item:
+    # Start root item
+    post:
+      tags:
+        - Test Item Async
+      summary: Start Root Item
+      description: Start a root test item
+      operationId: startRootItem_1
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+  /v2/{projectName}/item/{itemUuid}:
+    parameters:
+      - name: itemUuid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectName
+        in: path
+        required: true
+        schema:
+          type: string
+    # Start child item (container, step, nested step)
+    post:
+      tags:
+        - Test Item Async
+      summary: Start Child Item
+      description: Start a child test item
+      operationId: startChildItem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+    # Finish test item
+    put:
+      tags:
+        - Test Item Async
+      summary: Finish Test Item
+      description: Finish test item
+      operationId: finishTestItem
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishTestItemRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v2/{projectName}/log:
+    # Create log
+    post:
+      tags:
+        - Log Async
+      summary: Create Log
+      description: Create log (batching operation)
+      operationId: createLog
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                json_request_part:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SaveLogRQ'
+              required:
+                - json_request_part
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSaveOperatingRS'
+
+  # Discovery endpoints
+  /v1/{projectName}/settings:
+    get:
+      tags:
+        - Project Settings
+      summary: Get project specific issue sub-types
+      description: Only for users that are assigned to the project
+      operationId: getProjectSettings
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectSettingsResource'
+  /info:
+    get:
+      tags:
+        - Settings
+      summary: Get system info
+      description: Get ReportPortal system information
+      operationId: getSystemInfo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+  # Other paths
+  # Launch endpoints
+  /v1/{projectName}/launch:
+    get:
+      tags:
+        - Launch
+      summary: Get list of project launches by filter
+      operationId: getProjectLaunches
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: string
+        - name: filter.eq.userId
+          in: query
+          description: Filters by 'userId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.number
+          in: query
+          description: Filters by 'number'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.user
+          in: query
+          description: Filters by 'user'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLaunchResource'
+    post:
+      tags:
+        - Launch
+      summary: Starts launch for specified project
+      operationId: startLaunch_1
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartLaunchRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartLaunchRS'
+    delete:
+      tags:
+        - Launch
+      summary: Delete specified launches by ids
+      operationId: deleteLaunches
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteBulkRS'
+  /v1/{projectName}/launch/{launchId}/stop:
+    put:
+      tags:
+        - Launch
+      summary: Force finish launch for specified project
+      operationId: forceFinishLaunch
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishExecutionRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/{launchId}/update:
+    put:
+      tags:
+        - Launch
+      summary: Updates launch for specified project
+      operationId: updateLaunch
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLaunchRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/{launchId}/finish:
+    put:
+      tags:
+        - Launch
+      summary: Finish launch for specified project
+      operationId: finishLaunch_1
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishExecutionRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishLaunchRS'
+  /v1/{projectName}/launch/{launchId}:
+    get:
+      tags:
+        - Launch
+      summary: Get specified launch by ID
+      operationId: getLaunch
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchResource'
+    delete:
+      tags:
+        - Launch
+      summary: Delete specified launch by ID
+      operationId: deleteLaunch
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/{launchId}/report:
+    get:
+      tags:
+        - Launch
+      summary: Export specified launch
+      description: 'Only following formats are supported: pdf (by default), xls, html.'
+      operationId: getLaunchReport
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: view
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - pdf
+              - xls
+              - html
+      responses:
+        '200':
+          description: OK
+  /v1/{projectName}/launch/update:
+    put:
+      tags:
+        - Launch
+      summary: Updates launches for specified project
+      operationId: updateLaunches
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRQLongUpdateLaunchRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/stop:
+    put:
+      tags:
+        - Launch
+      summary: Force finish launch
+      operationId: bulkForceFinish
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRQLongFinishExecutionRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/info:
+    put:
+      tags:
+        - Launch
+      summary: Bulk update attributes and description
+      operationId: bulkUpdate
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkInfoUpdateRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/merge:
+    post:
+      tags:
+        - Launch
+      summary: Merge set of specified launches in common one
+      description: This operation merges a set of launches into a common one. The IDs of the launches to be merged should be provided in the 'launches' field of the request body.
+      operationId: mergeLaunchesOldUuid_1
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeLaunchesRQ'
+        required: true
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.launch.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchResourceOld'
+            application/x.reportportal.launch.v2+json:
+              schema:
+                $ref: '#/components/schemas/LaunchResource'
+  /v1/{projectName}/launch/cluster:
+    post:
+      tags:
+        - Launch
+      summary: Create launch clusters
+      operationId: createClusters
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClustersRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/analyze:
+    post:
+      tags:
+        - Launch
+      summary: Start launch auto-analyzer on demand
+      operationId: startLaunchAnalyzer
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeLaunchRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/launch/uuid/{launchId}:
+    get:
+      tags:
+        - Launch
+      summary: Get specified launch by UUID
+      operationId: getLaunchByUuidOldTimestamp
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.launch.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaunchResourceOld'
+            application/x.reportportal.launch.v2+json:
+              schema:
+                $ref: '#/components/schemas/LaunchResource'
+  /v1/{projectName}/launch/status:
+    get:
+      tags:
+        - Launch
+      summary: Get Statuses
+      operationId: getStatuses
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  /v1/{projectName}/launch/owners:
+    get:
+      tags:
+        - Launch
+      summary: Get all unique owners of project launches
+      operationId: getAllOwners
+      parameters:
+        - name: filter.cnt.user
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            default: DEFAULT
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/launch/names:
+    get:
+      tags:
+        - Launch
+      summary: Get launch names of project
+      operationId: getAllLaunchNames
+      parameters:
+        - name: filter.cnt.name
+          in: query
+          required: false
+          schema:
+            type: string
+            default: ''
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/launch/mode:
+    get:
+      tags:
+        - Launch
+      summary: Get launches of specified project from DEBUG mode
+      operationId: getDebugLaunches
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: string
+        - name: filter.eq.userId
+          in: query
+          description: Filters by 'userId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.number
+          in: query
+          description: Filters by 'number'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.user
+          in: query
+          description: Filters by 'user'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLaunchResource'
+  /v1/{projectName}/launch/latest:
+    get:
+      tags:
+        - Launch
+      summary: Get list of latest project launches by filter
+      operationId: getLatestLaunches
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: string
+        - name: filter.eq.userId
+          in: query
+          description: Filters by 'userId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.number
+          in: query
+          description: Filters by 'number'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.user
+          in: query
+          description: Filters by 'user'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLaunchResource'
+  /v1/{projectName}/launch/compare:
+    get:
+      tags:
+        - Launch
+      summary: Compare launches
+      operationId: compareLaunches
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ChartStatisticsContent'
+  /v1/{projectName}/launch/cluster/{launchId}:
+    get:
+      tags:
+        - Launch
+      summary: Get all index clusters of the launch
+      operationId: getClusters
+      parameters:
+        - name: launchId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageClusterInfoResource'
+  /v1/{projectName}/launch/attribute/values:
+    get:
+      tags:
+        - Launch
+      summary: Get all unique attribute values of project launches
+      operationId: getAttributeValues
+      parameters:
+        - name: filter.cnt.attributeValue
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/launch/attribute/keys:
+    get:
+      tags:
+        - Launch
+      summary: Get all unique attribute keys of project launches
+      operationId: getAttributeKeys
+      parameters:
+        - name: filter.cnt.attributeKey
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # Test Item Endpoints
+  /v1/{projectName}/item:
+    get:
+      tags:
+        - Test Item
+      summary: Find test items by specified filter
+      operationId: getTestItems
+      parameters:
+        - name: filterId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: isLatest
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: launchesLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: array
+        - name: filter.eq.levelAttribute
+          in: query
+          description: Filters by 'levelAttribute'
+          schema:
+            type: array
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.issueType
+          in: query
+          description: Filters by 'issueType'
+          schema:
+            type: string
+        - name: filter.eq.clusterId
+          in: query
+          description: Filters by 'clusterId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueGroupId
+          in: query
+          description: Filters by 'issueGroupId'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.issueTypeId
+          in: query
+          description: Filters by 'issueTypeId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.value
+          in: query
+          description: Filters by 'value'
+          schema:
+            type: string
+        - name: filter.eq.duration
+          in: query
+          description: Filters by 'duration'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.locator
+          in: query
+          description: Filters by 'locator'
+          schema:
+            type: string
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.testCaseHash
+          in: query
+          description: Filters by 'testCaseHash'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasStats
+          in: query
+          description: Filters by 'hasStats'
+          schema:
+            type: boolean
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.type
+          in: query
+          description: Filters by 'type'
+          schema:
+            type: string
+        - name: filter.eq.issueId
+          in: query
+          description: Filters by 'issueId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.testCaseId
+          in: query
+          description: Filters by 'testCaseId'
+          schema:
+            type: string
+        - name: filter.eq.uniqueId
+          in: query
+          description: Filters by 'uniqueId'
+          schema:
+            type: string
+        - name: filter.has.compositeSystemAttribute
+          in: query
+          description: Filters by 'compositeSystemAttribute'
+          schema:
+            type: string
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueComment
+          in: query
+          description: Filters by 'issueComment'
+          schema:
+            type: string
+        - name: filter.eq.ignoreAnalyzer
+          in: query
+          description: Filters by 'ignoreAnalyzer'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasChildren
+          in: query
+          description: Filters by 'hasChildren'
+          schema:
+            type: boolean
+        - name: filter.eq.patternName
+          in: query
+          description: Filters by 'patternName'
+          schema:
+            type: array
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.ticketId
+          in: query
+          description: Filters by 'ticketId'
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: array
+        - name: filter.eq.key
+          in: query
+          description: Filters by 'key'
+          schema:
+            type: string
+        - name: filter.eq.parentId
+          in: query
+          description: Filters by 'parentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTestItemResource'
+    put:
+      tags:
+        - Test Item
+      summary: Update issues of specified test items
+      operationId: defineTestItemIssueType
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineIssueRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+    post:
+      tags:
+        - Test Item
+      summary: Start a root test item
+      operationId: startRootItem
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+    delete:
+      tags:
+        - Test Item
+      summary: Delete test items by specified ids
+      operationId: deleteTestItems
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/{parentItem}:
+    post:
+      tags:
+        - Test Item
+      summary: Start a child test item
+      operationId: startChildItem_2
+      parameters:
+        - name: parentItem
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+  /v1/{projectName}/item/:
+    post:
+      tags:
+        - Test Item
+      summary: Start a root test item
+      operationId: startRootItem_3
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+  /v1/{projectName}/item/{testItemId}:
+    put:
+      tags:
+        - Test Item
+      summary: Finish test item
+      operationId: finishTestItem_2
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: testItemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishTestItemRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/{itemId}/update:
+    put:
+      tags:
+        - Test Item
+      summary: Update test item
+      operationId: updateTestItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTestItemRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/suggest/choice:
+    put:
+      tags:
+        - Test Item
+      summary: Handle user choice from suggested items
+      operationId: handleSuggestChoose
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SuggestInfo'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/issue/unlink:
+    put:
+      tags:
+        - Test Item
+      summary: Unlink external issue for specified test items
+      operationId: unlinkExternalIssues
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlinkExternalIssueRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/issue/link:
+    put:
+      tags:
+        - Test Item
+      summary: Attach external issue for specified test items
+      operationId: linkExternalIssues
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkExternalIssueRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/info:
+    put:
+      tags:
+        - Test Item
+      summary: Bulk update attributes and description
+      operationId: bulkUpdate_1
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkInfoUpdateRQ'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/{itemId}:
+    get:
+      tags:
+        - Test Item
+      summary: Find test item by ID
+      operationId: getTestItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestItemResource'
+    delete:
+      tags:
+        - Test Item
+      summary: Delete test item
+      operationId: deleteTestItem
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/item/v2:
+    get:
+      tags:
+        - Test Item
+      summary: Find test items by specified filter
+      operationId: getTestItemsV2
+      parameters:
+        - name: params
+          in: query
+          required: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: array
+        - name: filter.eq.levelAttribute
+          in: query
+          description: Filters by 'levelAttribute'
+          schema:
+            type: array
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.issueType
+          in: query
+          description: Filters by 'issueType'
+          schema:
+            type: string
+        - name: filter.eq.clusterId
+          in: query
+          description: Filters by 'clusterId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueGroupId
+          in: query
+          description: Filters by 'issueGroupId'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.issueTypeId
+          in: query
+          description: Filters by 'issueTypeId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.value
+          in: query
+          description: Filters by 'value'
+          schema:
+            type: string
+        - name: filter.eq.duration
+          in: query
+          description: Filters by 'duration'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.locator
+          in: query
+          description: Filters by 'locator'
+          schema:
+            type: string
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.testCaseHash
+          in: query
+          description: Filters by 'testCaseHash'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasStats
+          in: query
+          description: Filters by 'hasStats'
+          schema:
+            type: boolean
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.type
+          in: query
+          description: Filters by 'type'
+          schema:
+            type: string
+        - name: filter.eq.issueId
+          in: query
+          description: Filters by 'issueId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.testCaseId
+          in: query
+          description: Filters by 'testCaseId'
+          schema:
+            type: string
+        - name: filter.eq.uniqueId
+          in: query
+          description: Filters by 'uniqueId'
+          schema:
+            type: string
+        - name: filter.has.compositeSystemAttribute
+          in: query
+          description: Filters by 'compositeSystemAttribute'
+          schema:
+            type: string
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueComment
+          in: query
+          description: Filters by 'issueComment'
+          schema:
+            type: string
+        - name: filter.eq.ignoreAnalyzer
+          in: query
+          description: Filters by 'ignoreAnalyzer'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasChildren
+          in: query
+          description: Filters by 'hasChildren'
+          schema:
+            type: boolean
+        - name: filter.eq.patternName
+          in: query
+          description: Filters by 'patternName'
+          schema:
+            type: array
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.ticketId
+          in: query
+          description: Filters by 'ticketId'
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: array
+        - name: filter.eq.key
+          in: query
+          description: Filters by 'key'
+          schema:
+            type: string
+        - name: filter.eq.parentId
+          in: query
+          description: Filters by 'parentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTestItemResource'
+  /v1/{projectName}/item/uuid/{itemId}:
+    get:
+      tags:
+        - Test Item
+      summary: Find test item by UUID
+      operationId: getTestItemByUuidTimestamp
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Successful response with dates in timestamp format. Response with dates in ISO-8601 format if the custom header ''Accept: application/x.reportportal.test.v2+json'' is used.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestItemResourceOld'
+            application/x.reportportal.test.v2+json:
+              schema:
+                $ref: '#/components/schemas/TestItemResource'
+  /v1/{projectName}/item/ticket/ids:
+    get:
+      tags:
+        - Test Item
+      summary: Get tickets that contains a term as a part inside for specified launch
+      operationId: getTicketIds
+      parameters:
+        - name: launch
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: term
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/item/ticket/ids/all:
+    get:
+      tags:
+        - Test Item
+      summary: Get tickets that contains a term as a part inside for specified launch
+      operationId: getTicketIdsForProject
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: term
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/item/suggest/{itemId}:
+    get:
+      tags:
+        - Test Item
+      summary: Search suggested items in analyzer for provided one
+      operationId: getSuggestedItems
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SuggestedItem'
+  /v1/{projectName}/item/suggest/cluster/{clusterId}:
+    get:
+      tags:
+        - Test Item
+      summary: Search suggested items in analyzer for provided one
+      operationId: getSuggestedClusterItems
+      parameters:
+        - name: clusterId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SuggestedItem'
+  /v1/{projectName}/item/step/attribute/values:
+    get:
+      tags:
+        - Test Item
+      summary: Get all unique attribute values of step items under specified project
+      operationId: getAttributeValues_1
+      parameters:
+        - name: filter.cnt.attributeValue
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filter.eq.name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/item/step/attribute/keys:
+    get:
+      tags:
+        - Test Item
+      summary: Get all unique attribute keys of step items under specified project
+      operationId: getAttributeKeys_1
+      parameters:
+        - name: filter.cnt.attributeKey
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/item/statistics:
+    get:
+      tags:
+        - Test Item
+      summary: Find accumulated statistics of items by specified filter
+      operationId: getTestItems_1
+      parameters:
+        - name: params
+          in: query
+          required: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: array
+        - name: filter.eq.levelAttribute
+          in: query
+          description: Filters by 'levelAttribute'
+          schema:
+            type: array
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.issueType
+          in: query
+          description: Filters by 'issueType'
+          schema:
+            type: string
+        - name: filter.eq.clusterId
+          in: query
+          description: Filters by 'clusterId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueGroupId
+          in: query
+          description: Filters by 'issueGroupId'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.issueTypeId
+          in: query
+          description: Filters by 'issueTypeId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.value
+          in: query
+          description: Filters by 'value'
+          schema:
+            type: string
+        - name: filter.eq.duration
+          in: query
+          description: Filters by 'duration'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.locator
+          in: query
+          description: Filters by 'locator'
+          schema:
+            type: string
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.testCaseHash
+          in: query
+          description: Filters by 'testCaseHash'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasStats
+          in: query
+          description: Filters by 'hasStats'
+          schema:
+            type: boolean
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.type
+          in: query
+          description: Filters by 'type'
+          schema:
+            type: string
+        - name: filter.eq.issueId
+          in: query
+          description: Filters by 'issueId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.testCaseId
+          in: query
+          description: Filters by 'testCaseId'
+          schema:
+            type: string
+        - name: filter.eq.uniqueId
+          in: query
+          description: Filters by 'uniqueId'
+          schema:
+            type: string
+        - name: filter.has.compositeSystemAttribute
+          in: query
+          description: Filters by 'compositeSystemAttribute'
+          schema:
+            type: string
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueComment
+          in: query
+          description: Filters by 'issueComment'
+          schema:
+            type: string
+        - name: filter.eq.ignoreAnalyzer
+          in: query
+          description: Filters by 'ignoreAnalyzer'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasChildren
+          in: query
+          description: Filters by 'hasChildren'
+          schema:
+            type: boolean
+        - name: filter.eq.patternName
+          in: query
+          description: Filters by 'patternName'
+          schema:
+            type: array
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.ticketId
+          in: query
+          description: Filters by 'ticketId'
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: array
+        - name: filter.eq.key
+          in: query
+          description: Filters by 'key'
+          schema:
+            type: string
+        - name: filter.eq.parentId
+          in: query
+          description: Filters by 'parentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsResource'
+  /v1/{projectName}/item/search:
+    get:
+      tags:
+        - Test Item
+      summary: Search test items by either name or attribute
+      operationId: getTestItems_2
+      parameters:
+        - name: filter.cnt.name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filter.has.compositeAttribute
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filter.in.status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTestItemResource'
+  /v1/{projectName}/item/items:
+    get:
+      tags:
+        - Test Item
+      summary: Get test items by specified ids
+      operationId: getTestItems_3
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestItemResource'
+  /v1/{projectName}/item/history:
+    get:
+      tags:
+        - Test Item
+      summary: Load history of test items
+      operationId: getItemsHistory
+      parameters:
+        - name: filterId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: historyDepth
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 5
+        - name: isLatest
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: launchesLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filter.eq.uuid
+          in: query
+          description: Filters by 'uuid'
+          schema:
+            type: string
+        - name: filter.eq.attributeValue
+          in: query
+          description: Filters by 'attributeValue'
+          schema:
+            type: array
+        - name: filter.eq.levelAttribute
+          in: query
+          description: Filters by 'levelAttribute'
+          schema:
+            type: array
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.startTime
+          in: query
+          description: Filters by 'startTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.issueType
+          in: query
+          description: Filters by 'issueType'
+          schema:
+            type: string
+        - name: filter.eq.clusterId
+          in: query
+          description: Filters by 'clusterId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueGroupId
+          in: query
+          description: Filters by 'issueGroupId'
+          schema:
+            type: string
+        - name: filter.eq.hasRetries
+          in: query
+          description: Filters by 'hasRetries'
+          schema:
+            type: boolean
+        - name: filter.eq.issueTypeId
+          in: query
+          description: Filters by 'issueTypeId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.value
+          in: query
+          description: Filters by 'value'
+          schema:
+            type: string
+        - name: filter.eq.duration
+          in: query
+          description: Filters by 'duration'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.has.compositeAttribute
+          in: query
+          description: Filters by 'compositeAttribute'
+          schema:
+            type: string
+        - name: filter.eq.endTime
+          in: query
+          description: Filters by 'endTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.statistics$executions$passed
+          in: query
+          description: Filters by 'statistics$executions$passed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.name
+          in: query
+          description: Filters by 'name'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.locator
+          in: query
+          description: Filters by 'locator'
+          schema:
+            type: string
+        - name: filter.eq.description
+          in: query
+          description: Filters by 'description'
+          schema:
+            type: string
+        - name: filter.eq.statistics$executions$failed
+          in: query
+          description: Filters by 'statistics$executions$failed'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.testCaseHash
+          in: query
+          description: Filters by 'testCaseHash'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$system_issue$si001
+          in: query
+          description: Filters by 'statistics$defects$system_issue$si001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasStats
+          in: query
+          description: Filters by 'hasStats'
+          schema:
+            type: boolean
+        - name: filter.eq.statistics$executions$total
+          in: query
+          description: Filters by 'statistics$executions$total'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$executions$skipped
+          in: query
+          description: Filters by 'statistics$executions$skipped'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+        - name: filter.eq.statistics$defects$product_bug$pb001
+          in: query
+          description: Filters by 'statistics$defects$product_bug$pb001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$automation_bug$ab001
+          in: query
+          description: Filters by 'statistics$defects$automation_bug$ab001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.type
+          in: query
+          description: Filters by 'type'
+          schema:
+            type: string
+        - name: filter.eq.issueId
+          in: query
+          description: Filters by 'issueId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.mode
+          in: query
+          description: Filters by 'mode'
+          schema:
+            type: string
+        - name: filter.eq.testCaseId
+          in: query
+          description: Filters by 'testCaseId'
+          schema:
+            type: string
+        - name: filter.eq.uniqueId
+          in: query
+          description: Filters by 'uniqueId'
+          schema:
+            type: string
+        - name: filter.has.compositeSystemAttribute
+          in: query
+          description: Filters by 'compositeSystemAttribute'
+          schema:
+            type: string
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.issueComment
+          in: query
+          description: Filters by 'issueComment'
+          schema:
+            type: string
+        - name: filter.eq.ignoreAnalyzer
+          in: query
+          description: Filters by 'ignoreAnalyzer'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$no_defect$nd001
+          in: query
+          description: Filters by 'statistics$defects$no_defect$nd001'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.hasChildren
+          in: query
+          description: Filters by 'hasChildren'
+          schema:
+            type: boolean
+        - name: filter.eq.patternName
+          in: query
+          description: Filters by 'patternName'
+          schema:
+            type: array
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.ticketId
+          in: query
+          description: Filters by 'ticketId'
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          description: Filters by 'attributeKey'
+          schema:
+            type: array
+        - name: filter.eq.key
+          in: query
+          description: Filters by 'key'
+          schema:
+            type: string
+        - name: filter.eq.parentId
+          in: query
+          description: Filters by 'parentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.statistics$defects$to_investigate$ti001
+          in: query
+          description: Filters by 'statistics$defects$to_investigate$ti001'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageTestItemHistoryElement'
+  /v1/{projectName}/item/attribute/values:
+    get:
+      tags:
+        - Test Item
+      summary: Get all unique attribute values on the project
+      operationId: getAttributeValues_2
+      parameters:
+        - name: filter.cnt.attributeValue
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.attributeKey
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: launch
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/item/attribute/keys:
+    get:
+      tags:
+        - Test Item
+      summary: Get all unique attribute keys on the project
+      operationId: getUniqueAttributeKeys
+      parameters:
+        - name: filter.cnt.attributeKey
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: launch
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /v1/{projectName}/item/attribute/keys/all:
+    get:
+      tags:
+        - Test Item
+      summary: Get all unique attribute keys of specified launch
+      operationId: getAttributeKeysForProject
+      parameters:
+        - name: filter.cnt.attributeKey
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filterId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: isLatest
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: launchesLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # Log endpoints
+  /v1/{projectName}/log:
+    get:
+      tags:
+        - Log
+      summary: Get logs by filter
+      operationId: getLogs
+      parameters:
+        - name: filter.under.path
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.item
+          in: query
+          description: Filters by 'item'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.level
+          in: query
+          description: Filters by 'level'
+          schema:
+            type: string
+        - name: filter.eq.message
+          in: query
+          description: Filters by 'message'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.launch
+          in: query
+          description: Filters by 'launch'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.logId
+          in: query
+          description: Filters by 'logId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.binaryContent
+          in: query
+          description: Filters by 'binaryContent'
+          schema:
+            type: string
+        - name: filter.eq.logTime
+          in: query
+          description: Filters by 'logTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.retryParentLaunchId
+          in: query
+          description: Filters by 'retryParentLaunchId'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLogResource'
+    post:
+      tags:
+        - Log
+      summary: Create log (batching operation)
+      operationId: createLog_1
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                json_request_part:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SaveLogRQ'
+              required:
+                - json_request_part
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSaveOperatingRS'
+  /v1/{projectName}/log/under:
+    post:
+      tags:
+        - Log
+      summary: Get logs under items
+      operationId: getLogsUnder
+      parameters:
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLogsUnderRq'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/LogResource'
+  /v1/{projectName}/log/search/{itemId}:
+    post:
+      tags:
+        - Log
+      summary: Search test items with similar error logs
+      operationId: searchLogs
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchLogRq'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchLogRs'
+  /v1/{projectName}/log/{logId}:
+    get:
+      tags:
+        - Log
+      summary: Get log by ID
+      operationId: getLog
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogResource'
+    delete:
+      tags:
+        - Log
+      summary: Delete log
+      operationId: deleteLog
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+  /v1/{projectName}/log/{logId}/page:
+    get:
+      tags:
+        - Log
+      summary: Get logs by filter
+      operationId: getPageNumber
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.item
+          in: query
+          description: Filters by 'item'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.level
+          in: query
+          description: Filters by 'level'
+          schema:
+            type: string
+        - name: filter.eq.message
+          in: query
+          description: Filters by 'message'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.launch
+          in: query
+          description: Filters by 'launch'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.logId
+          in: query
+          description: Filters by 'logId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.binaryContent
+          in: query
+          description: Filters by 'binaryContent'
+          schema:
+            type: string
+        - name: filter.eq.logTime
+          in: query
+          description: Filters by 'logTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.retryParentLaunchId
+          in: query
+          description: Filters by 'retryParentLaunchId'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+  /v1/{projectName}/log/uuid/{logId}:
+    get:
+      tags:
+        - Log
+      summary: Get log by UUID (Will be removed in version 6.0)
+      operationId: getLogByUuid
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogResource'
+      deprecated: true
+  /v1/{projectName}/log/nested/{parentId}:
+    get:
+      tags:
+        - Log
+      summary: Get nested steps with logs for the parent Test Item
+      operationId: getNestedItems
+      parameters:
+        - name: params
+          in: query
+          required: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: parentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.item
+          in: query
+          description: Filters by 'item'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.level
+          in: query
+          description: Filters by 'level'
+          schema:
+            type: string
+        - name: filter.eq.message
+          in: query
+          description: Filters by 'message'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.launch
+          in: query
+          description: Filters by 'launch'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.logId
+          in: query
+          description: Filters by 'logId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.binaryContent
+          in: query
+          description: Filters by 'binaryContent'
+          schema:
+            type: string
+        - name: filter.eq.logTime
+          in: query
+          description: Filters by 'logTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.retryParentLaunchId
+          in: query
+          description: Filters by 'retryParentLaunchId'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageObject'
+  /v1/{projectName}/log/locations/{parentId}:
+    get:
+      tags:
+        - Log
+      summary: Get next or previous log in test item
+      operationId: getErrorPage
+      parameters:
+        - name: params
+          in: query
+          required: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: parentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter.eq.item
+          in: query
+          description: Filters by 'item'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.level
+          in: query
+          description: Filters by 'level'
+          schema:
+            type: string
+        - name: filter.eq.message
+          in: query
+          description: Filters by 'message'
+          schema:
+            type: string
+        - name: filter.eq.id
+          in: query
+          description: Filters by 'id'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.path
+          in: query
+          description: Filters by 'path'
+          schema:
+            type: string
+        - name: filter.eq.autoAnalyzed
+          in: query
+          description: Filters by 'autoAnalyzed'
+          schema:
+            type: boolean
+        - name: filter.eq.launchId
+          in: query
+          description: Filters by 'launchId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.launch
+          in: query
+          description: Filters by 'launch'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.status
+          in: query
+          description: Filters by 'status'
+          schema:
+            type: string
+        - name: filter.eq.retryParentId
+          in: query
+          description: Filters by 'retryParentId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.logId
+          in: query
+          description: Filters by 'logId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.lastModified
+          in: query
+          description: Filters by 'lastModified'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.binaryContent
+          in: query
+          description: Filters by 'binaryContent'
+          schema:
+            type: string
+        - name: filter.eq.logTime
+          in: query
+          description: Filters by 'logTime'
+          schema:
+            type: string
+            format: date
+        - name: filter.eq.projectId
+          in: query
+          description: Filters by 'projectId'
+          schema:
+            type: integer
+            format: int32
+        - name: filter.eq.retryParentLaunchId
+          in: query
+          description: Filters by 'retryParentLaunchId'
+          schema:
+            type: integer
+            format: int32
+        - name: page.page
+          in: query
+          description: Results page you want to retrieve (0..N)
+          schema:
+            type: integer
+            format: int32
+        - name: page.size
+          in: query
+          description: Number of records per page
+          schema:
+            type: integer
+            format: int32
+        - name: page.sort
+          in: query
+          description: 'Sorting criteria in the format: property, (asc|desc). Default sort order is ascending. Multiple sort criteria are supported.'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PagedLogResource'
+components:
+  schemas:
+    AnalyticsResource:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        type:
+          type: string
+      required:
+        - type
+    OperationCompletionRS:
+      type: object
+      properties:
+        message:
+          type: string
+    FinishExecutionRQ:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
+        description:
+          type: string
+      required:
+        - endTime
+    ItemAttributesRQ:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          maxLength: 2147483647
+          minLength: 1
+        system:
+          type: boolean
+          example: false
+      required:
+        - value
+    FinishLaunchRS:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+          format: int64
+        link:
+          type: string
+    ExternalSystemIssue:
+      type: object
+      properties:
+        ticketId:
+          type: string
+        submitDate:
+          type: string
+          format: date-time
+        btsUrl:
+          type: string
+        btsProject:
+          type: string
+        url:
+          type: string
+        pluginName:
+          type: string
+      required:
+        - btsProject
+        - btsUrl
+        - ticketId
+        - url
+    FinishTestItemRQ:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PASSED, FAILED, STOPPED, SKIPPED, INTERRUPTED, CANCELLED, INFO, WARN
+        description:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        retry:
+          type: boolean
+        launchUuid:
+          type: string
+        testCaseId:
+          type: string
+        retryOf:
+          type: string
+      required:
+        - endTime
+        - launchUuid
+    Issue:
+      type: object
+      properties:
+        issueType:
+          type: string
+        comment:
+          type: string
+          maxLength: 65536
+          minLength: 0
+        autoAnalyzed:
+          type: boolean
+        ignoreAnalyzer:
+          type: boolean
+        externalSystemIssues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalSystemIssue'
+          maxItems: 300
+          minItems: 0
+          uniqueItems: true
+      required:
+        - issueType
+    ContentParameters:
+      type: object
+      properties:
+        contentFields:
+          type: array
+          items:
+            type: string
+        itemsCount:
+          type: integer
+          format: int32
+        widgetOptions:
+          type: object
+          additionalProperties:
+            type: object
+    WidgetRQ:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 0
+        name:
+          type: string
+        widgetType:
+          type: string
+          enum:
+            - oldLineChart, investigatedTrend, launchStatistics, statisticTrend, casesTrend, notPassed, overallStatistics, uniqueBugTable, bugTrend, activityStream, launchesComparisonChart, launchesDurationChart, launchesTable, topTestCases, flakyTestCases, passingRateSummary, passingRatePerLaunch, productStatus, mostTimeConsuming, cumulative, topPatternTemplates, componentHealthCheck, componentHealthCheckTable, testCaseSearch
+        contentParameters:
+          $ref: '#/components/schemas/ContentParameters'
+        filterIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+      required:
+        - name
+        - widgetType
+    UpdateIssueSubTypeRQ:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateOneIssueSubTypeRQ'
+      required:
+        - ids
+    UpdateOneIssueSubTypeRQ:
+      type: object
+      properties:
+        locator:
+          type: string
+        typeRef:
+          type: string
+        longName:
+          type: string
+          maxLength: 55
+          minLength: 3
+        shortName:
+          type: string
+          example: string
+          maxLength: 4
+          minLength: 1
+        color:
+          type: string
+          example: string
+          maxLength: 55
+          minLength: 3
+          pattern: '#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+      required:
+        - color
+        - locator
+        - longName
+        - shortName
+        - typeRef
+    UpdatePatternTemplateRQ:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 55
+          minLength: 1
+        enabled:
+          type: boolean
+      required:
+        - enabled
+        - name
+    ItemAttributeResource:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+          maxLength: 2147483647
+          minLength: 1
+      required:
+        - value
+    SenderCaseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        ruleName:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+        sendCase:
+          type: string
+          enum:
+            - always
+            - failed
+            - toInvestigate
+            - more10
+            - more20
+            - more50
+        launchNames:
+          type: array
+          items:
+            type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        enabled:
+          type: boolean
+        type:
+          type: string
+        ruleDetails:
+          type: object
+          additionalProperties:
+            type: object
+        attributesOperator:
+          type: string
+          enum:
+            - AND, OR
+      required:
+        - attributesOperator
+        - ruleName
+        - sendCase
+    UpdateLaunchRQ:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+            - DEFAULT, DEBUG
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+    BulkRQLongUpdateLaunchRQ:
+      type: object
+      properties:
+        entities:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/UpdateLaunchRQ'
+      required:
+        - entities
+    BulkRQLongFinishExecutionRQ:
+      type: object
+      properties:
+        entities:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FinishExecutionRQ'
+      required:
+        - entities
+    BulkInfoUpdateRQ:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+          maxItems: 2147483647
+          minItems: 1
+        description:
+          $ref: '#/components/schemas/Description'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/UpdateItemAttributeRQ'
+      required:
+        - ids
+    Description:
+      type: object
+      properties:
+        comment:
+          type: string
+        action:
+          type: string
+          enum:
+            - DELETE
+            - UPDATE
+            - CREATE
+    UpdateItemAttributeRQ:
+      type: object
+      properties:
+        from:
+          $ref: '#/components/schemas/ItemAttributeResource'
+        to:
+          $ref: '#/components/schemas/ItemAttributeResource'
+        action:
+          type: string
+          enum:
+            - DELETE
+            - UPDATE
+            - CREATE
+    DefineIssueRQ:
+      type: object
+      properties:
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/IssueDefinition'
+          maxItems: 300
+          minItems: 0
+      required:
+        - issues
+    IssueDefinition:
+      type: object
+      properties:
+        testItemId:
+          type: integer
+          format: int64
+        issue:
+          $ref: '#/components/schemas/Issue'
+      required:
+        - issue
+        - testItemId
+    UpdateTestItemRQ:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        description:
+          type: string
+        status:
+          type: string
+    SuggestInfo:
+      type: object
+      properties:
+        project:
+          type: integer
+          format: int64
+        testItem:
+          type: integer
+          format: int64
+        testItemLogId:
+          type: integer
+          format: int64
+        launchId:
+          type: integer
+          format: int64
+        launchName:
+          type: string
+        launchNumber:
+          type: integer
+          format: int64
+        issueType:
+          type: string
+        relevantItem:
+          type: integer
+          format: int64
+        relevantLogId:
+          type: integer
+          format: int64
+        isMergedLog:
+          type: boolean
+        matchScore:
+          type: number
+          format: float
+        resultPosition:
+          type: integer
+          format: int32
+        esScore:
+          type: number
+          format: float
+        esPosition:
+          type: integer
+          format: int32
+        modelFeatureNames:
+          type: string
+        modelFeatureValues:
+          type: string
+        modelInfo:
+          type: string
+        usedLogLines:
+          type: integer
+          format: int32
+        minShouldMatch:
+          type: integer
+          format: int32
+        processedTime:
+          type: number
+          format: float
+        userChoice:
+          type: integer
+          format: int32
+        methodName:
+          type: string
+        clusterId:
+          type: integer
+          format: int64
+    UnlinkExternalIssueRQ:
+      type: object
+      properties:
+        testItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          maxItems: 300
+          minItems: 0
+        ticketIds:
+          type: array
+          items:
+            type: string
+          maxItems: 300
+          minItems: 0
+      required:
+        - testItemIds
+        - ticketIds
+    LinkExternalIssueRQ:
+      type: object
+      properties:
+        testItemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          maxItems: 300
+          minItems: 0
+        issues:
+          $ref: '#/components/schemas/ExternalSystemIssue'
+      required:
+        - issues
+        - testItemIds
+    BulkUpdateFilterRQ:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 0
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - launch, testitem, log
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFilterCondition'
+          maxItems: 20
+          minItems: 1
+          uniqueItems: true
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+          maxItems: 2147483647
+          minItems: 1
+        id:
+          type: string
+      required:
+        - conditions
+        - id
+        - name
+        - orders
+        - type
+    CollectionsRQBulkUpdateFilterRQ:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkUpdateFilterRQ'
+      required:
+        - elements
+    Order:
+      type: object
+      properties:
+        sortingColumn:
+          type: string
+        isAsc:
+          type: boolean
+      required:
+        - isAsc
+        - sortingColumn
+    UserFilterCondition:
+      type: object
+      properties:
+        filteringField:
+          type: string
+        condition:
+          type: string
+        value:
+          type: string
+      required:
+        - condition
+        - filteringField
+        - value
+    UpdateUserFilterRQ:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 0
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - launch, testitem, log
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFilterCondition'
+          maxItems: 20
+          minItems: 1
+          uniqueItems: true
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+          maxItems: 2147483647
+          minItems: 1
+      required:
+        - conditions
+        - name
+        - orders
+        - type
+    Position:
+      type: object
+      properties:
+        positionX:
+          type: integer
+          format: int32
+        positionY:
+          type: integer
+          format: int32
+    Size:
+      type: object
+      properties:
+        width:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+    UpdateDashboardRQ:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 0
+        name:
+          type: string
+        updateWidgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/WidgetObjectModel'
+      required:
+        - name
+    WidgetObjectModel:
+      type: object
+      properties:
+        widgetName:
+          type: string
+        widgetId:
+          type: integer
+          format: int64
+        widgetType:
+          type: string
+        widgetSize:
+          $ref: '#/components/schemas/Size'
+        widgetPosition:
+          $ref: '#/components/schemas/Position'
+        widgetOptions:
+          type: object
+          additionalProperties:
+            type: object
+      required:
+        - widgetId
+    AddWidgetRq:
+      type: object
+      properties:
+        addWidget:
+          $ref: '#/components/schemas/WidgetObjectModel'
+      required:
+        - addWidget
+    UpdateSettingsRq:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+        - key
+        - value
+    ProjectConfigurationUpdate:
+      type: object
+      properties:
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - attributes
+    UpdateProjectRQ:
+      type: object
+      properties:
+        users:
+          type: object
+          additionalProperties:
+            type: string
+        configuration:
+          $ref: '#/components/schemas/ProjectConfigurationUpdate'
+    UnassignUsersRQ:
+      type: object
+      properties:
+        userNames:
+          type: array
+          items:
+            type: string
+      required:
+        - userNames
+    ProjectNotificationConfigDTO:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/SenderCaseDTO'
+    AssignUsersRQ:
+      type: object
+      properties:
+        userNames:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - userNames
+    UpdatePluginStateRQ:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+    IntegrationRQ:
+      type: object
+      properties:
+        name:
+          type: string
+        integrationParameters:
+          type: object
+          additionalProperties:
+            type: object
+        enabled:
+          type: boolean
+    EditUserRQ:
+      type: object
+      properties:
+        email:
+          type: string
+        externalId:
+          type: string
+        active:
+          type: boolean
+        role:
+          type: string
+        accountType:
+          type: string
+          enum:
+            - INTERNAL, SCIM
+        fullName:
+          type: string
+          example: string
+          maxLength: 256
+          minLength: 3
+          pattern: (\s*[\pL0-9-_\.]+\s*)+
+      required:
+        - fullName
+    SuccessfulUpdate:
+      type: object
+      properties:
+        message:
+          type: string
+          example: The update was completed successfully.
+    Problem:
+      type: object
+      description: Problem Details for HTTP APIs [RFC 9457](https://tools.ietf.org/html/rfc9457).  A Problem JSON object uses the media type `application/problem+json`.
+      properties:
+        type:
+          type: string
+          description: 'A URI reference that uniquely identifies the problem type only in the context of the provided API. Opposed to the specification in RFC-9457, it is neither recommended to be dereferenceable and point to a human-readable documentation nor globally unique for the problem type. '
+          example: /problems/user-authorization-failed
+        title:
+          type: string
+          description: 'A short summary of the problem type. Written in English and readable for engineers, usually not suited for non technical stakeholders and not localized. '
+          example: some title for the error situation
+        status:
+          type: integer
+          format: int32
+          description: 'The HTTP status code generated by the origin server for this occurrence of the problem. '
+          maximum: 600
+          minimum: 100
+        detail:
+          type: string
+          description: 'A human readable explanation specific to this occurrence of the problem that is helpful to locate the problem and give advice on how to proceed. Written in English and readable for engineers, usually not suited for non technical stakeholders and not localized. '
+          example: some description for the error situation
+        instance:
+          type: string
+          description: 'A URI reference that identifies the specific occurrence of the problem, e.g. by adding a fragment identifier or sub-path to the problem type. May be used to locate the root of this problem in the source code. '
+          example: /some/uri-reference#specific-occurrence-context
+    AddProjectToGroupByIdRequest:
+      type: object
+      properties:
+        permission:
+          type: string
+          enum:
+            - PROJECT_MANAGER
+            - MEMBER
+            - OPERATOR
+            - CUSTOMER
+    UpdateGroupRequest:
+      type: object
+      description: Update group request.
+      properties:
+        name:
+          type: string
+          description: Display name.
+          maxLength: 60
+          minLength: 3
+          pattern: ^[A-Za-z0-9.'_\- ]+$
+        slug:
+          type: string
+          description: A slug is used to identify a resource. It should be unique and contain only lowercase letters, numbers, and hyphens. It should not start or end with a hyphen.
+          maxLength: 60
+          minLength: 3
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      required:
+        - name
+    File:
+      type: object
+      properties:
+        name:
+          type: string
+    SaveLogRQ:
+      type: object
+      properties:
+        itemUuid:
+          type: string
+          description: UUID of test item owned this log
+        uuid:
+          type: string
+        launchUuid:
+          type: string
+        time:
+          type: string
+          format: date-time
+        message:
+          type: string
+        level:
+          type: string
+          enum:
+            - error, warn, info, debug, trace, fatal, unknown
+        file:
+          $ref: '#/components/schemas/File'
+      required:
+        - launchUuid
+        - time
+    BatchElementCreatedRS:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+        stackTrace:
+          type: string
+    BatchSaveOperatingRS:
+      type: object
+      properties:
+        responses:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchElementCreatedRS'
+    EntryCreatedAsyncRS:
+      type: object
+      properties:
+        id:
+          type: string
+    StartLaunchRQ:
+      type: object
+      description: Start launch request body
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        uuid:
+          type: string
+        mode:
+          type: string
+          enum:
+            - DEFAULT
+            - DEBUG
+        rerun:
+          type: boolean
+        rerunOf:
+          type: string
+          description: UUID of desired launch to rerun
+      required:
+        - name
+        - startTime
+        - uuid
+    StartLaunchRS:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+          format: int64
+    MergeLaunchesRQ:
+      type: object
+      description: Merge launches request body
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        startTime:
+          type: string
+          format: date-time
+        mode:
+          type: string
+          enum:
+            - DEFAULT
+            - DEBUG
+        launches:
+          type: array
+          description: A set of IDs of the launches to be merged.
+          items:
+            type: integer
+            format: int64
+          uniqueItems: true
+        endTime:
+          type: string
+          format: date-time
+        mergeType:
+          type: string
+          enum:
+            - BASIC, DEEP
+        extendSuitesDescription:
+          type: boolean
+      required:
+        - extendSuitesDescription
+        - launches
+        - mergeType
+        - name
+    LaunchResourceOld:
+      type: object
+      properties:
+        owner:
+          type: string
+        description:
+          type: string
+          maxLength: 2048
+          minLength: 0
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+          maxLength: 256
+          minLength: 3
+        number:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        mode:
+          type: string
+          enum:
+            - DEFAULT
+            - DEBUG
+        analysing:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        approximateDuration:
+          type: number
+          format: double
+        hasRetries:
+          type: boolean
+        rerun:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        retentionPolicy:
+          type: string
+          enum:
+            - IMPORTANT
+            - REGULAR
+      required:
+        - id
+        - name
+        - number
+        - startTime
+        - status
+        - uuid
+    StatisticsResource:
+      type: object
+      properties:
+        executions:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        defects:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int32
+    LaunchResource:
+      type: object
+      properties:
+        owner:
+          type: string
+        description:
+          type: string
+          maxLength: 2048
+          minLength: 0
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+          maxLength: 256
+          minLength: 3
+        number:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        lastModified:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        mode:
+          type: string
+          enum:
+            - DEFAULT
+            - DEBUG
+        analysing:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        approximateDuration:
+          type: number
+          format: double
+        hasRetries:
+          type: boolean
+        rerun:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        retentionPolicy:
+          type: string
+          enum:
+            - IMPORTANT
+            - REGULAR
+      required:
+        - id
+        - name
+        - number
+        - startTime
+        - status
+        - uuid
+    ParameterResource:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+      required:
+        - key
+    StartTestItemRQ:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        launchUuid:
+          type: string
+          description: UUID of parent launch
+        name:
+          type: string
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        uuid:
+          type: string
+        codeRef:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterResource'
+        uniqueId:
+          type: string
+          maxLength: 1024
+          minLength: 0
+        testCaseId:
+          type: string
+        type:
+          type: string
+          enum:
+            - SUITE, STORY, TEST, SCENARIO, STEP, BEFORE_CLASS, BEFORE_GROUPS,BEFORE_METHOD, BEFORE_SUITE, BEFORE_TEST, AFTER_CLASS, AFTER_GROUPS, AFTER_METHOD, AFTER_SUITE, AFTER_TEST
+        retry:
+          type: boolean
+        hasStats:
+          type: boolean
+        retryOf:
+          type: string
+      required:
+        - launchUuid
+        - name
+        - startTime
+        - type
+        - uuid
+    EntryCreatedRS:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+    WidgetPreviewRQ:
+      type: object
+      properties:
+        widgetType:
+          type: string
+          enum:
+            - oldLineChart, investigatedTrend, launchStatistics, statisticTrend, casesTrend, notPassed, overallStatistics, uniqueBugTable, bugTrend, activityStream, launchesComparisonChart, launchesDurationChart, launchesTable, topTestCases, flakyTestCases, passingRateSummary, passingRatePerLaunch, productStatus, mostTimeConsuming, cumulative
+        contentParameters:
+          $ref: '#/components/schemas/ContentParameters'
+        filterIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+      required:
+        - widgetType
+    CreateIssueSubTypeRQ:
+      type: object
+      properties:
+        typeRef:
+          type: string
+        longName:
+          type: string
+          maxLength: 55
+          minLength: 3
+        shortName:
+          type: string
+          example: string
+          maxLength: 4
+          minLength: 1
+        color:
+          type: string
+          example: string
+          pattern: '#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+      required:
+        - color
+        - longName
+        - shortName
+        - typeRef
+    IssueSubTypeCreatedRS:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        locator:
+          type: string
+    CreatePatternTemplateRQ:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 55
+          minLength: 1
+        value:
+          type: string
+        type:
+          type: string
+        enabled:
+          type: boolean
+      required:
+        - enabled
+        - name
+        - type
+        - value
+    GetLogsUnderRq:
+      type: object
+      properties:
+        itemIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        logLevel:
+          type: string
+          enum:
+            - error, warn, info, debug, trace, fatal, unknown
+      required:
+        - itemIds
+        - logLevel
+    BinaryContent:
+      type: object
+      properties:
+        id:
+          type: string
+        thumbnailId:
+          type: string
+        contentType:
+          type: string
+      required:
+        - contentType
+        - id
+        - thumbnailId
+    LogResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        time:
+          type: string
+          format: date-time
+        message:
+          type: string
+        binaryContent:
+          $ref: '#/components/schemas/BinaryContent'
+        thumbnail:
+          type: string
+        level:
+          type: string
+          enum:
+            - error, warn, info, debug, trace, fatal, unknown
+        itemId:
+          type: integer
+          format: int64
+        launchId:
+          type: integer
+          format: int64
+      required:
+        - id
+        - uuid
+    SearchLogRq:
+      type: object
+      properties:
+        filterId:
+          type: integer
+          format: int64
+        searchMode:
+          type: string
+          enum:
+            - currentLaunch, launchName, filter
+      required:
+        - searchMode
+    ItemPathName:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    LaunchPathName:
+      type: object
+      properties:
+        name:
+          type: string
+        number:
+          type: integer
+          format: int32
+    LogEntry:
+      type: object
+      properties:
+        message:
+          type: string
+        level:
+          type: string
+    PathNameResource:
+      type: object
+      properties:
+        launchPathName:
+          $ref: '#/components/schemas/LaunchPathName'
+        itemPaths:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemPathName'
+    SearchLogRs:
+      type: object
+      properties:
+        launchId:
+          type: integer
+          format: int64
+        itemId:
+          type: integer
+          format: int64
+        itemName:
+          type: string
+        path:
+          type: string
+        pathNames:
+          $ref: '#/components/schemas/PathNameResource'
+        duration:
+          type: number
+          format: double
+        status:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        patternTemplates:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogEntry'
+    CreateClustersRQ:
+      type: object
+      properties:
+        launchId:
+          type: integer
+          format: int64
+        removeNumbers:
+          type: boolean
+      required:
+        - launchId
+    AnalyzeLaunchRQ:
+      type: object
+      properties:
+        launchId:
+          type: integer
+          format: int64
+        analyzerMode:
+          type: string
+          enum:
+            - ALL, LAUNCH_NAME, CURRENT_LAUNCH, PREVIOUS_LAUNCH, CURRENT_AND_THE_SAME_NAME
+        analyzerTypeName:
+          type: string
+          enum:
+            - autoAnalyzer, patternAnalyzer
+        analyzeItemsMode:
+          type: array
+          enum:
+            - TO_INVESTIGATE, AUTO_ANALYZED, MANUALLY_ANALYZED
+          items:
+            type: string
+      required:
+        - analyzeItemsMode
+        - analyzerMode
+        - analyzerTypeName
+        - launchId
+    CreateDashboardRQ:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 0
+        name:
+          type: string
+      required:
+        - name
+    DashboardConfigResource:
+      type: object
+      properties:
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/WidgetConfigResource'
+    DashboardPreconfiguredRq:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 0
+        name:
+          type: string
+        config:
+          $ref: '#/components/schemas/DashboardConfigResource'
+      required:
+        - config
+        - name
+    UserFilterResource:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 1
+        owner:
+          type: string
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          maxLength: 128
+          minLength: 3
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFilterCondition'
+          maxItems: 2147483647
+          minItems: 1
+          uniqueItems: true
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+          maxItems: 2147483647
+          minItems: 1
+        type:
+          type: string
+      required:
+        - conditions
+        - id
+        - name
+        - orders
+        - owner
+        - type
+    WidgetConfigResource:
+      type: object
+      properties:
+        widgetObject:
+          $ref: '#/components/schemas/WidgetObjectModel'
+        widgetResource:
+          $ref: '#/components/schemas/WidgetResource'
+      required:
+        - widgetObject
+        - widgetResource
+    WidgetResource:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 1
+        owner:
+          type: string
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          maxLength: 128
+          minLength: 3
+        widgetType:
+          type: string
+          enum:
+            - oldLineChart, investigatedTrend, launchStatistics, statisticTrend, casesTrend, notPassed, overallStatistics, uniqueBugTable, bugTrend, activityStream, launchesComparisonChart, launchesDurationChart, launchesTable, topTestCases, flakyTestCases, passingRateSummary, passingRatePerLaunch, productStatus, mostTimeConsuming, cumulative
+        contentParameters:
+          $ref: '#/components/schemas/ContentParameters'
+        appliedFilters:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFilterResource'
+        content:
+          type: object
+          additionalProperties:
+            type: object
+      required:
+        - contentParameters
+        - id
+        - name
+        - widgetType
+    CreateProjectRQ:
+      type: object
+      properties:
+        projectName:
+          type: string
+          example: string
+          maxLength: 256
+          minLength: 3
+          pattern: '[a-zA-Z0-9-_]+'
+        entryType:
+          type: string
+          enum:
+            - INTERNAL
+      required:
+        - entryType
+        - projectName
+    LaunchImportRQ:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        name:
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributesRQ'
+          maxItems: 256
+          minItems: 0
+          uniqueItems: true
+        mode:
+          type: string
+          enum:
+            - DEFAULT
+            - DEBUG
+    DemoDataRq:
+      type: object
+      properties:
+        createDashboard:
+          type: boolean
+    DemoDataRs:
+      type: object
+      properties:
+        dashboardId:
+          type: integer
+          format: int64
+        launchIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+    AllowedValue:
+      type: object
+      properties:
+        valueId:
+          type: string
+        valueName:
+          type: string
+    NamedValue:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+    PostFormField:
+      type: object
+      properties:
+        fieldName:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        fieldType:
+          type: string
+        required:
+          type: boolean
+        value:
+          type: array
+          items:
+            type: string
+        namedValue:
+          type: array
+          items:
+            $ref: '#/components/schemas/NamedValue'
+        commandName:
+          type: string
+        definedValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowedValue'
+      required:
+        - id
+        - required
+    PostTicketRQ:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        domain:
+          type: string
+        token:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostFormField'
+        includeLogs:
+          type: boolean
+        includeData:
+          type: boolean
+        includeComments:
+          type: boolean
+        logQuantity:
+          type: integer
+          format: int32
+          maximum: 50
+          minimum: 0
+        item:
+          type: integer
+          format: int64
+        backLinks:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - backLinks
+        - fields
+        - item
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+        summary:
+          type: string
+        status:
+          type: string
+        url:
+          type: string
+        pluginName:
+          type: string
+    SearchCriteria:
+      type: object
+      properties:
+        filter_key:
+          type: string
+        operation:
+          type: string
+          enum:
+            - EQ, NE, CNT, NON_CNT, BTW, IN
+        value:
+          type: string
+      required:
+        - filter_key
+        - value
+    SearchCriteriaRQ:
+      type: object
+      properties:
+        search_criterias:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchCriteria'
+          uniqueItems: true
+      required:
+        - search_criterias
+    ActivityEventResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique ID of the activity
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: The time the activity was created
+          example: '2021-07-01T12:00:00Z'
+        event_name:
+          type: string
+          description: The name of the event
+          example: updateItem
+        object_id:
+          type: integer
+          format: int64
+          description: The ID of the object on which activity was performed
+          example: 1
+        object_name:
+          type: string
+          description: The name of the object on which activity was performed
+          example: Test item name
+        object_type:
+          type: string
+          description: The type of the object on which activity was performed
+          example: itemIssue
+        project_id:
+          type: integer
+          format: int64
+          description: The ID of the project
+          example: 1
+        project_name:
+          type: string
+          description: The name of the project
+          example: Project name
+        subject_name:
+          type: string
+          description: The name of the subject who performed the activity
+          example: Username
+        subject_type:
+          type: string
+          description: The type of the subject who performed the activity
+          example: user
+        subject_id:
+          type: string
+          description: The ID of the subject who performed the activity
+          example: 1
+        details:
+          type: object
+          description: The details of the activity, for example history of value
+          example:
+            history:
+              - field: status
+                newValue: FAILED
+                oldValue: PASSED
+      required:
+        - created_at
+        - event_name
+        - id
+        - object_id
+        - object_name
+        - object_type
+        - project_id
+        - project_name
+        - subject_id
+        - subject_name
+        - subject_type
+    PagedResponseActivityEventResource:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+          format: int32
+        total_count:
+          type: integer
+          format: int64
+        sort:
+          type: string
+        order:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityEventResource'
+      required:
+        - items
+        - limit
+        - offset
+        - order
+        - sort
+        - total_count
+    CreateUserRQFull:
+      type: object
+      properties:
+        active:
+          type: boolean
+          default: 'true'
+        externalId:
+          type: string
+        accountType:
+          type: string
+          enum:
+            - INTERNAL, SCIM
+        login:
+          type: string
+          example: string
+          maxLength: 128
+          minLength: 1
+          pattern: '[a-zA-Z0-9-_.]+'
+        password:
+          type: string
+          maxLength: 256
+          minLength: 0
+          pattern: ^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^a-zA-Z\d\s])([^\s]){8,256}$
+        fullName:
+          type: string
+          example: string
+          maxLength: 256
+          minLength: 3
+          pattern: '[\pL0-9-_ \.]+'
+        email:
+          type: string
+        accountRole:
+          type: string
+          enum:
+            - USER, ADMINISTRATOR
+        projectRole:
+          type: string
+          enum:
+            - CUSTOMER, MEMBER, PROJECT_MANAGER
+        defaultProject:
+          type: string
+      required:
+        - email
+        - fullName
+        - login
+    CreateUserRS:
+      type: object
+      properties:
+        warning:
+          type: string
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+          format: uuid
+        login:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        accountRole:
+          type: string
+        accountType:
+          type: string
+        active:
+          type: boolean
+        externalId:
+          type: string
+    ApiKeyRQ:
+      type: object
+      properties:
+        name:
+          type: string
+          pattern: '[A-Za-z0-9-._~+/]+$'
+      required:
+        - name
+    ApiKeyRS:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        user_id:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+        api_key:
+          type: string
+      required:
+        - created_at
+        - id
+        - name
+        - user_id
+    CreateUserRQConfirm:
+      type: object
+      properties:
+        login:
+          type: string
+          example: string
+          maxLength: 128
+          minLength: 1
+          pattern: '[a-zA-Z0-9-_.]+'
+        password:
+          type: string
+          maxLength: 256
+          minLength: 8
+          pattern: ^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^a-zA-Z\d\s])([^\s]){8,256}$
+        fullName:
+          type: string
+          example: string
+          maxLength: 256
+          minLength: 3
+          pattern: '[\pL0-9-_ \.]+'
+        email:
+          type: string
+      required:
+        - email
+        - fullName
+        - login
+        - password
+    RestorePasswordRQ:
+      type: object
+      properties:
+        email:
+          type: string
+      required:
+        - email
+    ResetPasswordRQ:
+      type: object
+      properties:
+        password:
+          type: string
+          maxLength: 256
+          minLength: 8
+          pattern: ^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^a-zA-Z\d\s])([^\s]){8,256}$
+        uuid:
+          type: string
+      required:
+        - password
+        - uuid
+    ChangePasswordRQ:
+      type: object
+      properties:
+        newPassword:
+          type: string
+          maxLength: 256
+          minLength: 8
+          pattern: ^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^a-zA-Z\d\s])([^\s]){8,256}$
+        oldPassword:
+          type: string
+      required:
+        - newPassword
+        - oldPassword
+    CreateUserRQ:
+      type: object
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+        defaultProject:
+          type: string
+      required:
+        - defaultProject
+        - email
+        - role
+    CreateUserBidRS:
+      type: object
+      properties:
+        message:
+          type: string
+        bid:
+          type: string
+        backLink:
+          type: string
+    GroupInfo:
+      type: object
+      description: Group information.
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Resource identifier.
+          minimum: 1
+        uuid:
+          type: string
+          format: uuid
+          description: Global identifier of the group.
+        name:
+          type: string
+          description: Display name.
+          maxLength: 60
+          minLength: 3
+          pattern: ^[A-Za-z0-9.'_\- ]+$
+        slug:
+          type: string
+          description: A slug is used to identify a resource. It should be unique and contain only lowercase letters, numbers, and hyphens. It should not start or end with a hyphen.
+          maxLength: 60
+          minLength: 3
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+        created_by:
+          type: integer
+          format: int64
+          description: User ID of the user who created the group.
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when group was created.
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when group was last updated.
+        stats:
+          $ref: '#/components/schemas/GroupInfo_stats'
+    GroupInfo_stats:
+      type: object
+      description: Group statistics.
+      properties:
+        users_count:
+          type: integer
+          format: int32
+          description: Number of users in the group.
+        projects_count:
+          type: integer
+          format: int32
+          description: Number of projects in the group.
+    CreateGroupRequest:
+      type: object
+      description: Create group request.
+      properties:
+        name:
+          type: string
+          description: Display name.
+          maxLength: 60
+          minLength: 3
+          pattern: ^[A-Za-z0-9.'_\- ]+$
+        slug:
+          type: string
+          description: A slug is used to identify a resource. It should be unique and contain only lowercase letters, numbers, and hyphens. It should not start or end with a hyphen.
+          maxLength: 60
+          minLength: 3
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+      required:
+        - name
+    PageMetadata:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int64
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+        hasNext:
+          type: boolean
+    PageObject:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    MultiValueMapStringString:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      properties:
+        all:
+          type: object
+          additionalProperties:
+            type: string
+          writeOnly: true
+        empty:
+          type: boolean
+    IssueSubTypeResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        locator:
+          type: string
+        typeRef:
+          type: string
+        longName:
+          type: string
+        shortName:
+          type: string
+        color:
+          type: string
+    ProjectSettingsResource:
+      type: object
+      properties:
+        project:
+          type: integer
+          format: int64
+        subTypes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/IssueSubTypeResource'
+      required:
+        - project
+        - subTypes
+    PageLogResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    PagedLogResource:
+      type: object
+      properties:
+        pagesLocation:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: integer
+                format: int32
+              key:
+                type: integer
+                format: int64
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        time:
+          type: string
+          format: date-time
+        message:
+          type: string
+        binaryContent:
+          $ref: '#/components/schemas/BinaryContent'
+        thumbnail:
+          type: string
+        level:
+          type: string
+          enum:
+            - error, warn, info, debug, trace, fatal, unknown
+        itemId:
+          type: integer
+          format: int64
+        launchId:
+          type: integer
+          format: int64
+      required:
+        - id
+        - uuid
+    PageLaunchResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/LaunchResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    ChartStatisticsContent:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          format: int32
+        name:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        values:
+          type: object
+          additionalProperties:
+            type: string
+    ClusterInfoResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        index:
+          type: integer
+          format: int64
+        launchId:
+          type: integer
+          format: int64
+        message:
+          type: string
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        matchedTests:
+          type: integer
+          format: int64
+    PageClusterInfoResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClusterInfoResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    PageTestItemResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestItemResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    TestItemResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+        codeRef:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        type:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        parent:
+          type: integer
+          format: int64
+        pathNames:
+          $ref: '#/components/schemas/PathNameResource'
+        launchStatus:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        hasChildren:
+          type: boolean
+        hasStats:
+          type: boolean
+        launchId:
+          type: integer
+          format: int64
+        uniqueId:
+          type: string
+        testCaseId:
+          type: string
+        testCaseHash:
+          type: integer
+          format: int32
+        patternTemplates:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        path:
+          type: string
+    TestItemResourceOld:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        uuid:
+          type: string
+        name:
+          type: string
+        codeRef:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterResource'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemAttributeResource'
+          uniqueItems: true
+        type:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+        statistics:
+          $ref: '#/components/schemas/StatisticsResource'
+        parent:
+          type: integer
+          format: int64
+        pathNames:
+          $ref: '#/components/schemas/PathNameResource'
+        launchStatus:
+          type: string
+        issue:
+          $ref: '#/components/schemas/Issue'
+        hasChildren:
+          type: boolean
+        hasStats:
+          type: boolean
+        launchId:
+          type: integer
+          format: int64
+        uniqueId:
+          type: string
+        testCaseId:
+          type: string
+        testCaseHash:
+          type: integer
+          format: int32
+        patternTemplates:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        retries:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestItemResource'
+        path:
+          type: string
+    SuggestedItem:
+      type: object
+      properties:
+        testItemResource:
+          $ref: '#/components/schemas/TestItemResource'
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogResource'
+          uniqueItems: true
+        suggestRs:
+          $ref: '#/components/schemas/SuggestInfo'
+    PageTestItemHistoryElement:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestItemHistoryElement'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    TestItemHistoryElement:
+      type: object
+      properties:
+        groupingField:
+          type: string
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestItemResource'
+    PageUserFilterResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserFilterResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    OwnedEntityResource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        owner:
+          type: string
+        description:
+          type: string
+    PageOwnedEntityResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/OwnedEntityResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    DashboardResource:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 1500
+          minLength: 1
+        owner:
+          type: string
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          maxLength: 128
+          minLength: 3
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/WidgetObjectModel'
+      required:
+        - id
+        - name
+    PageDashboardResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    ActivityResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: The unique ID of the activity
+          example: 1
+        user:
+          type: string
+          description: The user who performed the activity
+          example: user
+        loggedObjectId:
+          type: integer
+          format: int64
+          description: The ID of the object on which activity was performed
+          example: 1
+        lastModified:
+          type: string
+          format: date-time
+          description: The time the activity was last modified
+          example: '2021-07-01T12:00:00Z'
+        actionType:
+          type: string
+          description: The type of action performed
+          example: startLaunch
+        objectType:
+          type: string
+          description: The type of object on which the activity was performed
+          example: LAUNCH
+        projectId:
+          type: integer
+          format: int64
+          description: The ID of the project in which the activity was performed
+          example: 1
+        projectName:
+          type: string
+          description: The name of the project in which the activity was performed
+          example: project
+        details:
+          type: object
+          description: The details of the activity, for example history of value
+          example:
+            history:
+              - field: status
+                newValue: FAILED
+                oldValue: PASSED
+        objectName:
+          type: string
+          description: The name of the object on which the activity was performed
+          example: Launch name
+      required:
+        - actionType
+        - id
+        - lastModified
+        - loggedObjectId
+        - objectType
+        - projectId
+        - user
+    ErrorRS:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          enum:
+            - INCORRECT_REQUEST
+            - BINARY_DATA_CANNOT_BE_SAVED
+            - ACCESS_DENIED
+            - ADDRESS_LOCKED
+            - PROJECT_NOT_FOUND
+            - LAUNCH_NOT_FOUND
+            - TEST_SUITE_NOT_FOUND
+            - TEST_ITEM_NOT_FOUND
+            - LOG_NOT_FOUND
+            - ROLE_NOT_FOUND
+            - USER_NOT_FOUND
+            - WIDGET_NOT_FOUND
+            - WIDGET_NOT_FOUND_IN_DASHBOARD
+            - DASHBOARD_NOT_FOUND
+            - USER_FILTER_NOT_FOUND
+            - ACTIVITY_NOT_FOUND
+            - UNABLE_TO_CREATE_WIDGET
+            - INTEGRATION_NOT_FOUND
+            - PROJECT_NOT_CONFIGURED
+            - SERVER_SETTINGS_NOT_FOUND
+            - ISSUE_TYPE_NOT_FOUND
+            - PROJECT_SETTINGS_NOT_FOUND
+            - TICKET_NOT_FOUND
+            - AUTH_INTEGRATION_NOT_FOUND
+            - WIDGET_NOT_FOUND_IN_PROJECT
+            - USER_FILTER_NOT_FOUND_IN_PROJECT
+            - DASHBOARD_NOT_FOUND_IN_PROJECT
+            - PATTERN_TEMPLATE_NOT_FOUND_IN_PROJECT
+            - TEST_ITEM_OR_LAUNCH_NOT_FOUND
+            - ANALYZER_NOT_FOUND
+            - ATTACHMENT_NOT_FOUND
+            - UNABLE_TO_LOAD_BINARY_DATA
+            - CLUSTER_NOT_FOUND
+            - ORGANIZATION_NOT_FOUND
+            - NOT_FOUND
+            - INCORRECT_FILTER_PARAMETERS
+            - INCORRECT_SORTING_PARAMETERS
+            - INCORRECT_INTEGRATION_NAME
+            - UNABLE_MODIFY_SHARABLE_RESOURCE
+            - INCORRECT_AUTHENTICATION_TYPE
+            - UNABLE_POST_TICKET
+            - UNABLE_INTERACT_WITH_INTEGRATION
+            - UNABLE_ASSIGN_UNASSIGN_USER_TO_PROJECT
+            - EMAIL_CONFIGURATION_IS_INCORRECT
+            - PROJECT_UPDATE_NOT_ALLOWED
+            - UNABLE_TO_UPDATE_YOURSELF_ROLE
+            - FORBIDDEN_OPERATION
+            - RESOURCE_ALREADY_EXISTS
+            - ROLE_ALREADY_EXISTS_ERROR
+            - USER_ALREADY_EXISTS
+            - USER_FILTER_ALREADY_EXISTS
+            - PROJECT_ALREADY_EXISTS
+            - DASHBOARD_UPDATE_ERROR
+            - UNABLE_LOAD_WIDGET_CONTENT
+            - UNABLE_ADD_TO_FAVORITE
+            - INTEGRATION_ALREADY_EXISTS
+            - SERVER_SETTINGS_ALREADY_EXISTS
+            - UNABLE_REMOVE_FROM_FAVORITE
+            - LAUNCH_IS_NOT_FINISHED
+            - TEST_ITEM_IS_NOT_FINISHED
+            - INCORRECT_FINISH_STATUS
+            - BAD_REQUEST_ERROR
+            - BAD_SAVE_LOG_REQUEST
+            - REPORTING_ITEM_ALREADY_FINISHED
+            - AMBIGUOUS_TEST_ITEM_STATUS
+            - FAILED_TEST_ITEM_ISSUE_TYPE_DEFINITION
+            - FINISH_TIME_EARLIER_THAN_START_TIME
+            - FINISH_ITEM_NOT_ALLOWED
+            - FINISH_LAUNCH_NOT_ALLOWED
+            - START_ITEM_NOT_ALLOWED
+            - CHILD_START_TIME_EARLIER_THAN_PARENT
+            - UNSUPPORTED_TEST_ITEM_TYPE
+            - LOGGING_IS_NOT_ALLOWED
+            - BAD_SAVE_WIDGET_REQUEST
+            - BAD_UPDATE_WIDGET_REQUEST
+            - UNABLE_LOAD_TEST_ITEM_HISTORY
+            - BAD_SAVE_USER_FILTER_REQUEST
+            - RETRIES_HANDLER_ERROR
+            - IMPORT_FILE_ERROR
+            - PARSING_XML_ERROR
+            - OBJECT_RETRIEVAL_ERROR
+            - PLUGIN_UPLOAD_ERROR
+            - PLUGIN_REMOVE_ERROR
+            - UNABLE_TO_SAVE_CHILD_ITEM_FOR_THE_RETRY
+            - PATTERN_ANALYSIS_ERROR
+            - PROJECT_DOESNT_CONTAIN_USER
+            - UNCLASSIFIED_REPORT_PORTAL_ERROR
+            - BAD_UPDATE_PREFERENCE_REQUEST
+            - UNSUPPORTED_MERGE_STRATEGY_TYPE
+            - DEMO_DATA_GENERATION_ERROR
+            - UNCLASSIFIED_ERROR
+        message:
+          type: string
+        stackTrace:
+          type: string
+    Page:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    IntegrationResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        projectId:
+          type: integer
+          format: int64
+        name:
+          type: string
+        integrationType:
+          $ref: '#/components/schemas/IntegrationTypeResource'
+        integrationParameters:
+          type: object
+          additionalProperties:
+            type: object
+        enabled:
+          type: boolean
+        creator:
+          type: string
+        creationDate:
+          type: string
+          format: date-time
+    IntegrationTypeResource:
+      type: object
+      properties:
+        type:
+          type: integer
+          format: int64
+        name:
+          type: string
+        enabled:
+          type: boolean
+        authFlow:
+          type: string
+          enum:
+            - OAUTH
+            - BASIC
+            - TOKEN
+            - FORM
+            - LDAP
+        creationDate:
+          type: string
+          format: date-time
+        pluginType:
+          type: string
+        groupType:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: object
+    PatternTemplateResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
+        enabled:
+          type: boolean
+    ProjectConfiguration:
+      type: object
+      properties:
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+        subTypes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/IssueSubTypeResource'
+        notificationsConfiguration:
+          $ref: '#/components/schemas/ProjectNotificationConfigDTO'
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatternTemplateResource'
+      required:
+        - attributes
+    ProjectResource:
+      type: object
+      properties:
+        projectId:
+          type: integer
+          format: int64
+        projectName:
+          type: string
+        entryType:
+          type: string
+        configuration:
+          $ref: '#/components/schemas/ProjectConfiguration'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectUser'
+        integrations:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntegrationResource'
+        organization:
+          type: string
+        allocatedStorage:
+          type: integer
+          format: int64
+        creationDate:
+          type: string
+          format: date-time
+      required:
+        - configuration
+        - creationDate
+        - entryType
+        - projectId
+        - projectName
+    ProjectUser:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        login:
+          type: string
+        email:
+          type: string
+        projectRole:
+          type: string
+        accountRole:
+          type: string
+        accountType:
+          type: string
+    AssignedProject:
+      type: object
+      properties:
+        projectRole:
+          type: string
+        entryType:
+          type: string
+    PageUserResource:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResource'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    UserResource:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        externalId:
+          type: string
+        active:
+          type: boolean
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: string
+        email:
+          type: string
+        photoId:
+          type: string
+        fullName:
+          type: string
+        accountType:
+          type: string
+        userRole:
+          type: string
+        photoLoaded:
+          type: boolean
+        metadata:
+          type: object
+        assignedProjects:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/AssignedProject'
+      required:
+        - email
+        - id
+        - userId
+    LaunchesPerUser:
+      type: object
+      properties:
+        fullName:
+          type: string
+        count:
+          type: integer
+          format: int32
+    DeleteBulkRS:
+      type: object
+      properties:
+        successfullyDeleted:
+          type: array
+          items:
+            type: integer
+            format: int64
+        notFound:
+          type: array
+          items:
+            type: integer
+            format: int64
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorRS'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
