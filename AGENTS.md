@@ -7,7 +7,7 @@ The ingest service centers on `cmd/ingest/main.go`, which wires up the CLI entry
 ## Build, Test, and Development Commands
 
 - `go run ./cmd/ingest`: Run the ingest service locally; perfect for quick smoke checks.
-- `go build ./...`: Compile all packages and surface type errors early.
+- `go build -o bin/ ./...`: Compile all packages and surface type errors early.
 - `go test ./...`: Execute the unit test suite; add `-race` when touching concurrency.
 - `go vet ./...`: Catch suspicious patterns before review.
 - `go fmt ./...`: Format code prior to committing; matches the repository baseline.

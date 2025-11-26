@@ -14,7 +14,7 @@ This is the ingest service for ReportPortal, responsible for receiving and proce
 
 ### Building
 
-- `go build ./...` - Compile all packages
+- `go build -o bin/ ./...` - Compile all packages
 - `go build -o bin/ingest ./cmd/ingest` - Build the main binary
 
 ### Running tests
