@@ -12,7 +12,7 @@ info:
 servers:
   - url: /api
 security:
-  - bearerAuth: []
+  - bearerAuth: [ ]
 tags:
   - name: Launch
     description: Launches API collection
@@ -798,31 +798,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateClustersRQ'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationCompletionRS'
-  /v1/{projectName}/launch/analyze:
-    post:
-      tags:
-        - Launch
-      summary: Start launch auto-analyzer on demand
-      operationId: startLaunchAnalyzer
-      parameters:
-        - name: projectName
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyzeLaunchRQ'
         required: true
       responses:
         '200':
@@ -1842,61 +1817,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/OperationCompletionRS'
-  /v1/{projectName}/item/{parentItem}:
-    post:
-      tags:
-        - Test Item
-      summary: Start a child test item
-      operationId: startChildItem_2
-      parameters:
-        - name: parentItem
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: projectName
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartTestItemRQ'
-        required: true
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntryCreatedAsyncRS'
-  /v1/{projectName}/item/:
-    post:
-      tags:
-        - Test Item
-      summary: Start a root test item
-      operationId: startRootItem_3
-      parameters:
-        - name: projectName
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartTestItemRQ'
-        required: true
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntryCreatedAsyncRS'
   /v1/{projectName}/item/{testItemId}:
     put:
       tags:
@@ -1920,6 +1840,82 @@ paths:
             schema:
               $ref: '#/components/schemas/FinishTestItemRQ'
         required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationCompletionRS'
+    post:
+      tags:
+        - Test Item
+      summary: Start a child test item
+      operationId: startChildItem_2
+      parameters:
+        - name: testItemId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTestItemRQ'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryCreatedAsyncRS'
+    get:
+      tags:
+        - Test Item
+      summary: Find test item by ID
+      operationId: getTestItem
+      parameters:
+        - name: testItemId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestItemResource'
+    delete:
+      tags:
+        - Test Item
+      summary: Delete test item
+      operationId: deleteTestItem
+      parameters:
+        - name: testItemId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: projectName
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -2057,54 +2053,6 @@ paths:
             schema:
               $ref: '#/components/schemas/BulkInfoUpdateRQ'
         required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationCompletionRS'
-  /v1/{projectName}/item/{itemId}:
-    get:
-      tags:
-        - Test Item
-      summary: Find test item by ID
-      operationId: getTestItem
-      parameters:
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: projectName
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TestItemResource'
-    delete:
-      tags:
-        - Test Item
-      summary: Delete test item
-      operationId: deleteTestItem
-      parameters:
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: projectName
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: OK
@@ -3603,8 +3551,6 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/SaveLogRQ'
-              required:
-                - json_request_part
       responses:
         '200':
           description: OK
@@ -4356,12 +4302,12 @@ components:
           minLength: 3
         shortName:
           type: string
-          example: string
+
           maxLength: 4
           minLength: 1
         color:
           type: string
-          example: string
+
           maxLength: 55
           minLength: 3
           pattern: '#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
@@ -4896,7 +4842,7 @@ components:
             - INTERNAL, SCIM
         fullName:
           type: string
-          example: string
+
           maxLength: 256
           minLength: 3
           pattern: (\s*[\pL0-9-_\.]+\s*)+
@@ -5349,12 +5295,10 @@ components:
           minLength: 3
         shortName:
           type: string
-          example: string
           maxLength: 4
           minLength: 1
         color:
           type: string
-          example: string
           pattern: '#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
       required:
         - color
@@ -5530,31 +5474,6 @@ components:
           type: boolean
       required:
         - launchId
-    AnalyzeLaunchRQ:
-      type: object
-      properties:
-        launchId:
-          type: integer
-          format: int64
-        analyzerMode:
-          type: string
-          enum:
-            - ALL, LAUNCH_NAME, CURRENT_LAUNCH, PREVIOUS_LAUNCH, CURRENT_AND_THE_SAME_NAME
-        analyzerTypeName:
-          type: string
-          enum:
-            - autoAnalyzer, patternAnalyzer
-        analyzeItemsMode:
-          type: array
-          enum:
-            - TO_INVESTIGATE, AUTO_ANALYZED, MANUALLY_ANALYZED
-          items:
-            type: string
-      required:
-        - analyzeItemsMode
-        - analyzerMode
-        - analyzerTypeName
-        - launchId
     CreateDashboardRQ:
       type: object
       properties:
@@ -5675,7 +5594,6 @@ components:
       properties:
         projectName:
           type: string
-          example: string
           maxLength: 256
           minLength: 3
           pattern: '[a-zA-Z0-9-_]+'
@@ -5957,7 +5875,6 @@ components:
             - INTERNAL, SCIM
         login:
           type: string
-          example: string
           maxLength: 128
           minLength: 1
           pattern: '[a-zA-Z0-9-_.]+'
@@ -5968,7 +5885,6 @@ components:
           pattern: ^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^a-zA-Z\d\s])([^\s]){8,256}$
         fullName:
           type: string
-          example: string
           maxLength: 256
           minLength: 3
           pattern: '[\pL0-9-_ \.]+'
@@ -6050,7 +5966,6 @@ components:
       properties:
         login:
           type: string
-          example: string
           maxLength: 128
           minLength: 1
           pattern: '[a-zA-Z0-9-_.]+'
@@ -6061,7 +5976,6 @@ components:
           pattern: ^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^a-zA-Z\d\s])([^\s]){8,256}$
         fullName:
           type: string
-          example: string
           maxLength: 256
           minLength: 3
           pattern: '[\pL0-9-_ \.]+'
