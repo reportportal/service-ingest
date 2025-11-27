@@ -23,5 +23,5 @@ func health() *chi.Mux {
 func writeHealthResponse(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("."))
+	_, _ = w.Write([]byte("."))
 }
