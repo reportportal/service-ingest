@@ -8,39 +8,39 @@ import (
 
 type launchHandler struct{}
 
-func (rs launchHandler) routes() chi.Router {
+func (h launchHandler) routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Route("/v1/{projectName}/launch", func(r chi.Router) {
-		r.Get("/uuid/{launchUuid}", rs.getLaunch)
-		r.Put("/{launchId}/update", rs.updateLaunch)
+		r.Get("/uuid/{launchUuid}", h.getLaunch)
+		r.Put("/{launchId}/update", h.updateLaunch)
 	})
 
 	r.Route("/v2/{projectName}/launch", func(r chi.Router) {
-		r.Post("/", rs.startLaunch)
-		r.Post("/merge", rs.mergeLaunch)
-		r.Put("/{launchUuid}/finish", rs.finishLaunch)
+		r.Post("/", h.startLaunch)
+		r.Post("/merge", h.mergeLaunch)
+		r.Put("/{launchUuid}/finish", h.finishLaunch)
 	})
 
 	return r
 }
 
-func (rs launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
+func (h launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (rs launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
+func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (rs launchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
+func (h launchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (rs launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
+func (h launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (rs launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
+func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
