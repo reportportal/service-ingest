@@ -18,7 +18,6 @@ caches, file systems, and external APIs.
 ```text
 data/
 ├── postgres/
-│   ├── agent.go         # Agent repository implementation
 │   ├── launch.go        # Launch repository implementation
 │   └── db.go            # Database connection and utilities
 └── redis/
