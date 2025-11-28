@@ -14,10 +14,8 @@ func (h testHandler) routes() chi.Router {
 	r.Route("/v2/{projectName}/item", func(r chi.Router) {
 		r.Post("/", h.startRootItem)
 
-		r.Route("/{itemUuid}", func(r chi.Router) {
-			r.Post("/", h.startChildItem)
-			r.Put("/", h.finishTestItem)
-		})
+		r.Post("/{itemUuid}", h.startChildItem)
+		r.Put("/{itemUuid}", h.finishTestItem)
 	})
 
 	r.Get("/v1/{projectName}/item/uuid/{itemUuid}", h.getTestItem)
