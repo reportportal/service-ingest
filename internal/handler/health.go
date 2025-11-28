@@ -6,16 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func health() *chi.Mux {
+func healthRouter() chi.Router {
 	r := chi.NewRouter()
-
 	r.Head("/health", getHealthStatus)
 	r.Get("/health", getHealthStatus)
-
 	return r
 }
 
-func getHealthStatus(w http.ResponseWriter, r *http.Request) {
+func getHealthStatus(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("."))
