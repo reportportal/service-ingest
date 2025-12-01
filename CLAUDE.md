@@ -42,7 +42,7 @@ The service follows a three-layer architecture: **handler → service → data**
   - `model/` - Domain models (entities) with validation
   - `config/` - Configuration management from environment variables
 - `pkg/` - Shared libraries that could be imported by external projects
-- `api/` - API contracts (OpenAPI specs, DTOs, gRPC definitions)
+- `api/` - API contracts (OpenAPI/Swagger specs, JSON schema files, protocol definition files)
 - `migrations/` - Database migration scripts
 - `bin/` - Compiled binaries
 
