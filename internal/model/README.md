@@ -15,7 +15,7 @@ Models represent the core business objects and contain domain logic.
 ```text
 model/
 ├── launch.go        # Launch domain model
-├── test.go          # Test item domain model
+├── item.go          # Test item domain model
 ├── step.go          # Nested step domain model
 ├── log.go           # Log domain model
 └── errors.go        # Domain-specific errors (optional)
