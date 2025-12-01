@@ -6,9 +6,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type testHandler struct{}
+type itemHandler struct{}
 
-func (h testHandler) routes() chi.Router {
+func (h itemHandler) routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Route("/v2/{projectName}/item", func(r chi.Router) {
@@ -23,18 +23,18 @@ func (h testHandler) routes() chi.Router {
 	return r
 }
 
-func (h testHandler) startRootItem(w http.ResponseWriter, r *http.Request) {
+func (h itemHandler) startRootItem(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (h testHandler) startChildItem(w http.ResponseWriter, r *http.Request) {
+func (h itemHandler) startChildItem(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (h testHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
+func (h itemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }
 
-func (h testHandler) getTestItem(w http.ResponseWriter, r *http.Request) {
+func (h itemHandler) getTestItem(w http.ResponseWriter, r *http.Request) {
 	notImplemented(w, r)
 }

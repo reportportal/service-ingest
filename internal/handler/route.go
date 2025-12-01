@@ -22,7 +22,7 @@ func apiRouter() chi.Router {
 	r.Use(middleware.RequestID)
 
 	r.Mount("/", launchHandler{}.routes())
-	r.Mount("/", testHandler{}.routes())
+	r.Mount("/", itemHandler{}.routes())
 	r.Mount("/", logHandler{}.routes())
 
 	r.Get("/v1/{projectName}/settings", notImplemented)
