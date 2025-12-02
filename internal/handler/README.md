@@ -18,6 +18,9 @@ and returning HTTP responses.
 handler/
 ├── launch.go        # Launch-related endpoints
 ├── item.go          # Test item endpoints
+├── log.go           # Log-related endpoints
+├── info.go          # Service info endpoints
+├── health.go        # Health check endpoints
 ├── router.go        # Route registration and middleware setup
 ├── middleware.go    # Custom HTTP middleware (auth, logging, etc.)
 └── response.go      # Helper functions for HTTP responses
@@ -26,6 +29,11 @@ handler/
 ## Router Setup
 
 The `router.go` file sets up all routes and middleware.
+
+
+## Handler models
+
+Handlers use request and response models defined in the `*_dto.go` files to structure incoming and outgoing data.
 
 ## Dependencies
 
