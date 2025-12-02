@@ -6,6 +6,7 @@ import (
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
+// StartLaunchRQ represents the request to start a launch
 type StartLaunchRQ struct {
 	UUID        string           `json:"uuid" validate:"required,uuid"`
 	Name        string           `json:"name" validate:"required"`
@@ -18,7 +19,7 @@ type StartLaunchRQ struct {
 }
 
 type StartLaunchRS struct {
-	ID     string `json:"id"`
+	UUID   string `json:"id"`
 	Number int64  `json:"number"`
 }
 
@@ -30,7 +31,7 @@ type FinishLaunchRQ struct {
 }
 
 type FinishLaunchRS struct {
-	ID     string `json:"id"`
+	UUID   string `json:"id"`
 	Number int64  `json:"number"`
 	Link   string `json:"link"`
 }
@@ -112,12 +113,4 @@ func (sl StartLaunchRQ) toLaunchModel() model.Launch {
 		IsRerun:     sl.IsRerun,
 		RerunOf:     sl.RerunOf,
 	}
-}
-
-func (sl StartLaunchRQ) toAttributesModel() []model.Attribute {
-	attrs := make([]model.Attribute, 0, len(sl.Attributes))
-	for _, a := range sl.Attributes {
-		attrs = append(attrs, a.toModelAttribute())
-	}
-	return attrs
 }
