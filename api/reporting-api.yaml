@@ -651,6 +651,7 @@ components:
         - name
     LaunchResourceOld:
       type: object
+      description: Legacy launch resource with dates in Unix timestamp format (milliseconds since epoch)
       properties:
         owner:
           type: string
@@ -671,14 +672,17 @@ components:
           type: integer
           format: int64
         startTime:
-          type: string
-          format: date-time
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
         endTime:
-          type: string
-          format: date-time
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
         lastModified:
-          type: string
-          format: date-time
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
         status:
           type: string
         statistics:
@@ -738,6 +742,7 @@ components:
               format: int32
     LaunchResource:
       type: object
+      description: Launch resource with dates in ISO-8601 format
       properties:
         owner:
           type: string
@@ -760,12 +765,15 @@ components:
         startTime:
           type: string
           format: date-time
+          description: ISO-8601 formatted datetime with timezone
         endTime:
           type: string
           format: date-time
+          description: ISO-8601 formatted datetime with timezone
         lastModified:
           type: string
           format: date-time
+          description: ISO-8601 formatted datetime with timezone
         status:
           type: string
         statistics:
@@ -925,6 +933,7 @@ components:
         - subTypes
     TestItemResource:
       type: object
+      description: Test item resource with dates in ISO-8601 format
       properties:
         id:
           type: integer
@@ -951,9 +960,11 @@ components:
         startTime:
           type: string
           format: date-time
+          description: ISO-8601 formatted datetime with timezone
         endTime:
           type: string
           format: date-time
+          description: ISO-8601 formatted datetime with timezone
         status:
           type: string
         statistics:
@@ -990,6 +1001,7 @@ components:
           type: string
     TestItemResourceOld:
       type: object
+      description: Legacy test item resource with dates in Unix timestamp format (milliseconds since epoch)
       properties:
         id:
           type: integer
@@ -1014,11 +1026,13 @@ components:
         type:
           type: string
         startTime:
-          type: string
-          format: date-time
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
         endTime:
-          type: string
-          format: date-time
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
         status:
           type: string
         statistics:
