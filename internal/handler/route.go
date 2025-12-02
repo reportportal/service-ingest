@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// validate is a singleton validator instance used for struct validation across handlers.
 var validate = validator.New()
 
 func NewRouter(basePath string) chi.Router {
