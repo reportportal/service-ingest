@@ -24,17 +24,17 @@ func (h itemHandler) routes() chi.Router {
 }
 
 func (h itemHandler) startRootItem(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }
 
 func (h itemHandler) startChildItem(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }
 
 func (h itemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }
 
 func (h itemHandler) getTestItem(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }

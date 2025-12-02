@@ -17,5 +17,5 @@ func (h logHandler) routes() chi.Router {
 }
 
 func (h logHandler) createLog(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }

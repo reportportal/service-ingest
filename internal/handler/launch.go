@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/reportportal/service-ingest/internal/service"
 )
 
-type launchHandler struct{}
+type launchHandler struct {
+	service *service.LaunchService
+}
 
 func (h launchHandler) routes() chi.Router {
 	r := chi.NewRouter()
@@ -26,21 +30,42 @@ func (h launchHandler) routes() chi.Router {
 }
 
 func (h launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	var rq StartLaunchRQ
+	if err := json.NewDecoder(r.Body).Decode(&rq); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	defer r.Body.Close()
+
+	if err := validate.Struct(rq); err != nil {
+		respondValidationError(w, err)
+		return
+	}
+
+	resp, err := h.service.StartLaunch(rq.toLaunchModel())
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to start launch")
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, StartLaunchRS{
+		UUID:   resp.UUID,
+		Number: resp.Number,
+	})
 }
 
 func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }
 
 func (h launchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }
 
 func (h launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }
 
 func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	respondNotImplemented(w, r)
 }

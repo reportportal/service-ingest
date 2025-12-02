@@ -3,7 +3,10 @@ package handler
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
 )
+
+var validate = validator.New()
 
 func NewRouter(basePath string) chi.Router {
 	r := chi.NewRouter()
@@ -25,7 +28,7 @@ func apiRouter() chi.Router {
 	r.Mount("/", itemHandler{}.routes())
 	r.Mount("/", logHandler{}.routes())
 
-	r.Get("/v1/{projectName}/settings", notImplemented)
+	r.Get("/v1/{projectName}/settings", respondNotImplemented)
 
 	return r
 }
