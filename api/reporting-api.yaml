@@ -649,6 +649,21 @@ components:
         - launches
         - mergeType
         - name
+    StatisticsResource:
+      type: object
+      properties:
+        executions:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+        defects:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+              format: int32
     LaunchResourceOld:
       type: object
       description: Legacy launch resource with dates in Unix timestamp format (milliseconds since epoch)
@@ -725,21 +740,6 @@ components:
         - startTime
         - status
         - uuid
-    StatisticsResource:
-      type: object
-      properties:
-        executions:
-          type: object
-          additionalProperties:
-            type: integer
-            format: int32
-        defects:
-          type: object
-          additionalProperties:
-            type: object
-            additionalProperties:
-              type: integer
-              format: int32
     LaunchResource:
       type: object
       description: Launch resource with dates in ISO-8601 format
