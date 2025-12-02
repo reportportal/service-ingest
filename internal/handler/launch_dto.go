@@ -60,9 +60,8 @@ type GetLaunchRS struct {
 }
 
 // GetLaunchOldRS represents legacy launch resource with dates in Unix timestamp format (milliseconds since epoch)
-// StartTime - Unix timestamp in milliseconds
-// EndTime - Unix timestamp in milliseconds
-// LastModified - Unix timestamp in milliseconds
+//
+// StartTime, EndTime, LastModified - Unix timestamp in milliseconds
 type GetLaunchOldRS struct {
 	ID                  int64                  `json:"id" validate:"required"`
 	UUID                string                 `json:"uuid" validate:"required"`
