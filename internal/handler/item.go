@@ -8,17 +8,20 @@ import (
 
 type itemHandler struct{}
 
-func (h itemHandler) routes() chi.Router {
+func (h itemHandler) routesV1() chi.Router {
 	r := chi.NewRouter()
 
-	r.Route("/v2/{projectName}/item", func(r chi.Router) {
-		r.Post("/", h.startRootItem)
+	r.Get("/uuid/{itemUuid}", h.getTestItem)
 
-		r.Post("/{itemUuid}", h.startChildItem)
-		r.Put("/{itemUuid}", h.finishTestItem)
-	})
+	return r
+}
 
-	r.Get("/v1/{projectName}/item/uuid/{itemUuid}", h.getTestItem)
+func (h itemHandler) routesV2() chi.Router {
+	r := chi.NewRouter()
+
+	r.Post("/", h.startRootItem)
+	r.Post("/{itemUuid}", h.startChildItem)
+	r.Put("/{itemUuid}", h.finishTestItem)
 
 	return r
 }

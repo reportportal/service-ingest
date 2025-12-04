@@ -8,8 +8,8 @@ import (
 
 func healthRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Head("/health", getHealthStatus)
-	r.Get("/health", getHealthStatus)
+	r.Head("/", getHealthStatus)
+	r.Get("/", getHealthStatus)
 	return r
 }
 

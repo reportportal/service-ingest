@@ -11,7 +11,7 @@ type logHandler struct{}
 func (h logHandler) routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/v2/{projectName}/log", h.createLog)
+	r.Post("/", h.createLog)
 
 	return r
 }

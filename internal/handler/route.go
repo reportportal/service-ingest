@@ -14,8 +14,8 @@ func NewRouter(basePath string) chi.Router {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Mount(basePath, infoRouter())
-	r.Mount(basePath, healthRouter())
+	r.Mount(basePath+"/info", infoRouter())
+	r.Mount(basePath+"/health", healthRouter())
 	r.Mount(basePath, apiRouter())
 
 	return r
@@ -25,9 +25,11 @@ func apiRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 
-	r.Mount("/", launchHandler{}.routes())
-	r.Mount("/", itemHandler{}.routes())
-	r.Mount("/", logHandler{}.routes())
+	r.Mount("/v1/{projectName}/launch", launchHandler{}.routesV1())
+	r.Mount("/v2/{projectName}/launch", launchHandler{}.routesV2())
+	r.Mount("/v1/{projectName}/item", itemHandler{}.routesV1())
+	r.Mount("/v2/{projectName}/item", itemHandler{}.routesV2())
+	r.Mount("/v2/{projectName}/log", logHandler{}.routes())
 
 	r.Get("/v1/{projectName}/settings", respondNotImplemented)
 

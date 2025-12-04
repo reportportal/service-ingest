@@ -9,7 +9,7 @@ import (
 func infoRouter() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/info", getInfo)
+	r.Get("/", getInfo)
 
 	return r
 }
