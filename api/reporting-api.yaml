@@ -10,7 +10,13 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0
   version: 5.14.0
 servers:
-  - url: /api
+  - url: '{host}{basePath}'
+    description: ReportPortal server
+    variables:
+      host:
+        default: 'http://localhost:8080'
+      basePath:
+        default: /api
 security:
   - bearerAuth: [ ]
 tags:
@@ -406,9 +412,6 @@ components:
       properties:
         id:
           type: string
-        number:
-          type: integer
-          format: int64
         link:
           type: string
     ExternalSystemIssue:
@@ -602,9 +605,6 @@ components:
       properties:
         id:
           type: string
-        number:
-          type: integer
-          format: int64
     MergeLaunchesRQ:
       type: object
       description: Merge launches request body
