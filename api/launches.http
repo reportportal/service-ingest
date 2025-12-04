@@ -1,4 +1,4 @@
-@host = http://localhost:8080
+@host = http://localhost:8089
 @projectName = superadmin_personal
 @username =
 @password =
@@ -18,9 +18,35 @@ Authorization: Bearer {{access_token}}
 
 ### Get old launch format
 GET {{host}}/api/v1/{{projectName}}/launch/uuid/64a5d4b3-3c3a-448a-8537-104406deb0dc
-Authorization: Bearer {{access_token}}
+#Authorization: Bearer {{access_token}}
 
 ### Get new launch format
 GET {{host}}/api/v1/{{projectName}}/launch/uuid/64a5d4b3-3c3a-448a-8537-104406deb0dc
-Authorization: Bearer {{access_token}}
+#Authorization: Bearer {{access_token}}
 Accept: application/x.reportportal.launch.v2+json
+
+### Start new launch
+POST {{host}}/api/v2/{{projectName}}/launch
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "uuid": "64a5d4b3-3c3a-448a-8537-104406deb0d3",
+  "name": "New Launch from API",
+  "startTime": "2024-06-10T10:00:00.000Z",
+  "description": "This is a new launch created via API",
+  "mode": "DEFAULT2"
+}
+
+### Finish launch
+@finishLaunchUuid = 64a5d4b3-3c3a-448a-8537-104406deb0d3
+PUT {{host}}/api/v2/{{projectName}}/launch/{{finishLaunchUuid}}/finish
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "endTime": "2024-06-10T12:00:00.000Z",
+  "status": "PASSED"
+}
+
+### Update launch

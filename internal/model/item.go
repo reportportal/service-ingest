@@ -7,3 +7,5 @@ type Attribute struct {
 	Value    string `json:"value"`
 	IsSystem bool   `json:"isSystem"`
 }
+
+type Attributes []Attribute

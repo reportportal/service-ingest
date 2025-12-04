@@ -23,7 +23,7 @@ handler/
 ├── health.go        # Health check endpoints
 ├── router.go        # Route registration and middleware setup
 ├── middleware.go    # Custom HTTP middleware (auth, logging, etc.)
-└── response.go      # Helper functions for HTTP responses
+└── error.go         # Error handling models and utilities
 ```
 
 ## Router Setup

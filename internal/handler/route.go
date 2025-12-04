@@ -31,7 +31,7 @@ func apiRouter() chi.Router {
 	r.Mount("/v2/{projectName}/item", itemHandler{}.routesV2())
 	r.Mount("/v2/{projectName}/log", logHandler{}.routes())
 
-	r.Get("/v1/{projectName}/settings", respondNotImplemented)
+	r.Get("/v1/{projectName}/settings", RespondNotImplemented)
 
 	return r
 }

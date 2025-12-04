@@ -1,10 +1,12 @@
 package handler
 
 import (
-	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/reportportal/service-ingest/internal/service"
 )
 
@@ -32,43 +34,89 @@ func (h launchHandler) routesV2() chi.Router {
 }
 
 func (h launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
-	var rq StartLaunchRQ
-	if err := json.NewDecoder(r.Body).Decode(&rq); err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-	defer r.Body.Close()
+	data := &StartLaunchRQ{}
 
-	if err := validate.Struct(rq); err != nil {
-		respondValidationError(w, err)
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
 		return
 	}
 
 	projectName := chi.URLParam(r, "projectName")
-	resp, err := h.service.StartLaunch(rq.toLaunchModel(), projectName)
+	err := h.service.StartLaunch(projectName, data.toLaunchModel())
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Failed to start launch")
+		render.Render(w, r, InternalServerError)
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, StartLaunchRS{
-		UUID:   resp.UUID,
-		Number: resp.Number,
-	})
+	render.Status(r, http.StatusCreated)
+	render.Render(w, r, &StartLaunchRS{UUID: data.UUID})
 }
 
 func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
-	respondNotImplemented(w, r)
-}
+	data := &FinishLaunchRQ{}
 
-func (h launchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
-	respondNotImplemented(w, r)
-}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
 
-func (h launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
-	respondNotImplemented(w, r)
+	launchUUID := chi.URLParam(r, "launchUuid")
+	projectName := chi.URLParam(r, "projectName")
+
+	err := h.service.FinishLaunch(projectName, launchUUID, data.toFinishLaunchModel())
+	if err != nil {
+		render.Render(w, r, InternalServerError)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.Render(w, r, &FinishLaunchRS{
+		UUID: launchUUID,
+		Link: r.Host + "/ui/#/" + projectName + "/launches/" + launchUUID,
+	})
 }
 
 func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
-	respondNotImplemented(w, r)
+	data := &UpdateLaunchRQ{}
+
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	projectName := chi.URLParam(r, "projectName")
+	launchId, err := strconv.ParseInt(chi.URLParam(r, "launchId"), 10, 64)
+	if err != nil {
+		render.Render(w, r, ErrInvalidRequest(errors.New("invalid launch ID format")))
+		return
+	}
+
+	err = h.service.UpdateLaunch(projectName, launchId, data.toUpdateLaunchModel())
+	if err != nil {
+		render.Render(w, r, InternalServerError)
+		return
+	}
+
+	//render.Status(r, http.StatusOK)
+	//render.Render(w, r, &UpdateLaunchRS{Message: "Launch updated successfully"})
+	RespondNotImplemented(w, r)
+}
+
+func (h launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
+	projectName := chi.URLParam(r, "projectName")
+	launchUUID := chi.URLParam(r, "launchUuid")
+
+	_, err := h.service.GetLaunch(projectName, launchUUID)
+	if err != nil {
+		render.Render(w, r, InternalServerError)
+		return
+	}
+
+	//render.Status(r, http.StatusOK)
+	//render.Render(w, r, NewGetLaunchOldRS(launch))
+	RespondNotImplemented(w, r)
+}
+
+func (h launchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
+	RespondNotImplemented(w, r)
 }

@@ -4,22 +4,24 @@ import "github.com/reportportal/service-ingest/internal/model"
 
 type ItemAttribute struct {
 	Key      string `json:"key,omitempty"`
-	Value    string `json:"value"`
+	Value    string `json:"value" validate:"required"`
 	IsSystem bool   `json:"system"`
 }
 
-func (a ItemAttribute) toAttributeModel() model.Attribute {
-	return model.Attribute{
-		Key:      a.Key,
-		Value:    a.Value,
-		IsSystem: a.IsSystem,
+type Attributes []ItemAttribute
+
+func (a Attributes) toAttributesModel() model.Attributes {
+	attrs := make([]model.Attribute, 0, len(a))
+	for _, a := range a {
+		attrs = append(attrs, model.Attribute(a))
 	}
+	return attrs
 }
 
-func (sl StartLaunchRQ) toAttributesModel() []model.Attribute {
-	attrs := make([]model.Attribute, 0, len(sl.Attributes))
-	for _, a := range sl.Attributes {
-		attrs = append(attrs, a.toAttributeModel())
+func fromAttributesModel(modelAttrs model.Attributes) Attributes {
+	attrs := make(Attributes, len(modelAttrs))
+	for i, attr := range modelAttrs {
+		attrs[i] = ItemAttribute(attr)
 	}
 	return attrs
 }
