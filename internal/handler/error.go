@@ -47,17 +47,17 @@ func parseValidationError(err error) string {
 			field := e.Field()
 			switch e.Tag() {
 			case "required":
-				return fmt.Sprintf("%s is required", field)
+				return fmt.Sprintf("`%s` is required", field)
 			case "uuid":
-				return fmt.Sprintf("%s must be a valid UUID", field)
+				return fmt.Sprintf("`%s` must be a valid UUID", field)
 			case "oneof":
-				return fmt.Sprintf("%s must be one of: %s", field, e.Param())
+				return fmt.Sprintf("`%s` must be one of: %s", field, e.Param())
 			case "max":
-				return fmt.Sprintf("%s must be less or equal than %s", field, e.Param())
+				return fmt.Sprintf("`%s` must be less or equal than %s", field, e.Param())
 			case "min":
-				return fmt.Sprintf("%s must be greater or equal than %s", field, e.Param())
+				return fmt.Sprintf("`%s` must be greater or equal than %s", field, e.Param())
 			default:
-				return fmt.Sprintf("%s validation failed on %s", field, e.Tag())
+				return fmt.Sprintf("`%s` validation failed on %s", field, e.Tag())
 			}
 		}
 	}
