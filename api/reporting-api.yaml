@@ -328,7 +328,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BatchSaveOperatingRS'
+                $ref: '#/components/schemas/SaveLogRS'
 
   # Discovery endpoints
   /v1/{projectName}/settings:
@@ -545,7 +545,7 @@ components:
       required:
         - launchUuid
         - time
-    BatchElementCreatedRS:
+    LogResponse:
       type: object
       properties:
         id:
@@ -554,13 +554,13 @@ components:
           type: string
         stackTrace:
           type: string
-    BatchSaveOperatingRS:
+    SaveLogRS:
       type: object
       properties:
         responses:
           type: array
           items:
-            $ref: '#/components/schemas/BatchElementCreatedRS'
+            $ref: '#/components/schemas/LogResponse'
     EntryCreatedAsyncRS:
       type: object
       properties:
