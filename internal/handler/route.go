@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"reflect"
+	"strings"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
@@ -18,6 +21,14 @@ func NewRouter(basePath string) chi.Router {
 	r.Mount(basePath+"/health", healthRouter())
 	r.Mount(basePath, apiRouter())
 
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
 	return r
 }
 
@@ -30,7 +41,6 @@ func apiRouter() chi.Router {
 	r.Mount("/v1/{projectName}/item", itemHandler{}.routesV1())
 	r.Mount("/v2/{projectName}/item", itemHandler{}.routesV2())
 	r.Mount("/v2/{projectName}/log", logHandler{}.routes())
-
 	r.Get("/v1/{projectName}/settings", RespondNotImplemented)
 
 	return r
