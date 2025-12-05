@@ -33,15 +33,6 @@ func ErrInvalidRequest(err error) render.Renderer {
 	}
 }
 
-func ErrRender(err error) render.Renderer {
-	return &ErrResponse{
-		Err:            err,
-		HTTPStatusCode: 422,
-		StatusText:     "Error rendering response.",
-		ErrorText:      err.Error(),
-	}
-}
-
 var InternalServerError = &ErrResponse{HTTPStatusCode: 500, StatusText: "Internal server error."}
 var NotImplementedError = &ErrResponse{HTTPStatusCode: 501, StatusText: "Not implemented."}
 
