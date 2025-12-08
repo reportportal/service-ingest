@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -23,10 +22,7 @@ func (h logHandler) routes() chi.Router {
 }
 
 func (h logHandler) createLog(w http.ResponseWriter, r *http.Request) {
-
-	contentType := r.Header.Get("Content-Type")
-
-	if strings.HasPrefix(contentType, "multipart/form-data") {
+	if r.MultipartForm != nil {
 		h.saveBatch(w, r)
 		return
 	}
@@ -35,6 +31,8 @@ func (h logHandler) createLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h logHandler) saveBatch(w http.ResponseWriter, r *http.Request) {
+	defer r.MultipartForm.RemoveAll()
+
 	batch := &SaveLogBatchRQ{}
 	if err := batch.MultipartFormBind(r); err != nil {
 		render.Render(w, r, InvalidRequestError(err))
