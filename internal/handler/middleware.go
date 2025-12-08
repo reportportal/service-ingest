@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"io"
 	"net/http"
 	"strings"
 )
@@ -15,13 +14,9 @@ func ParseMultipartForm(next http.Handler) http.Handler {
 		contentType := r.Header.Get("Content-Type")
 
 		if strings.HasPrefix(contentType, "multipart/form-data") {
-			r.ParseMultipartForm(32 << 20)
-
-			jsonPart := r.FormValue("json_request_part")
-			r.Body = io.NopCloser(strings.NewReader(jsonPart))
-
-			r.Header.Set("Content-Type", "application/json")
-			r.ContentLength = int64(len(jsonPart))
+			if err := r.ParseMultipartForm(32 << 20); err != nil {
+				return
+			}
 		}
 
 		next.ServeHTTP(w, r)

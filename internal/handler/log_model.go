@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -10,6 +11,23 @@ import (
 type SaveLogBatchRQ []SaveLogRQ
 
 func (rq *SaveLogBatchRQ) Bind(r *http.Request) error {
+	for i := range *rq {
+		if err := (*rq)[i].Bind(r); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (rq *SaveLogBatchRQ) MultipartFormBind(r *http.Request) error {
+	jsonPart := r.MultipartForm.Value["json_request_part"][0]
+	jsonData := []byte(jsonPart)
+
+	if err := json.Unmarshal(jsonData, rq); err != nil {
+		return err
+	}
+
 	for i := range *rq {
 		if err := (*rq)[i].Bind(r); err != nil {
 			return err
@@ -66,7 +84,5 @@ func (rs *SaveLogRS) Render(_ http.ResponseWriter, _ *http.Request) error {
 }
 
 type LogResponse struct {
-	ID         string `json:"id"`
-	Message    string `json:"message"`
-	StackTrace string `json:"stackTrace"`
+	ID string `json:"id"`
 }
