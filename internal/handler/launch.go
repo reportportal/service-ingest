@@ -37,7 +37,7 @@ func (h launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
 	data := &StartLaunchRQ{}
 
 	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, InvalidRequestError(err))
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
 	data := &FinishLaunchRQ{}
 
 	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, InvalidRequestError(err))
 		return
 	}
 
@@ -80,14 +80,14 @@ func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
 	data := &UpdateLaunchRQ{}
 
 	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
+		render.Render(w, r, InvalidRequestError(err))
 		return
 	}
 
 	projectName := chi.URLParam(r, "projectName")
 	launchId, err := strconv.ParseInt(chi.URLParam(r, "launchId"), 10, 64)
 	if err != nil {
-		render.Render(w, r, ErrInvalidRequest(errors.New("invalid launch ID format")))
+		render.Render(w, r, InvalidRequestError(errors.New("invalid launch ID format")))
 		return
 	}
 
