@@ -524,11 +524,11 @@ components:
     SaveLogRQ:
       type: object
       properties:
+        uuid:
+          type: string
         itemUuid:
           type: string
           description: UUID of test item owned this log
-        uuid:
-          type: string
         launchUuid:
           type: string
         time:
@@ -550,10 +550,8 @@ components:
       properties:
         id:
           type: string
-        message:
-          type: string
-        stackTrace:
-          type: string
+          format: uuid
+          description: UUID of created log entry
     SaveLogRS:
       type: object
       properties:
