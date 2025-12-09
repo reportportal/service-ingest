@@ -117,25 +117,10 @@ func (rs *UpdateLaunchRS) Render(_ http.ResponseWriter, _ *http.Request) error {
 
 // GetLaunchRS represents launch resource with dates in ISO-8601 format
 type GetLaunchRS struct {
-	ID                  int64                  `json:"id" validate:"required"`
-	UUID                string                 `json:"uuid" validate:"required"`
-	Name                string                 `json:"name" validate:"required"`
-	Number              int64                  `json:"number" validate:"required"`
-	Description         string                 `json:"description,omitempty"`
-	Status              string                 `json:"status" validate:"required"`
-	StartTime           time.Time              `json:"startTime" validate:"required"`
-	EndTime             time.Time              `json:"endTime,omitempty"`
-	LastModified        time.Time              `json:"lastModified"`
-	Owner               string                 `json:"owner,omitempty"`
-	Mode                model.LaunchMode       `json:"mode,omitempty"`
-	Statistics          Statistics             `json:"statistics,omitempty"`
-	Attributes          []ItemAttribute        `json:"attributes,omitempty"`
-	Analysing           []string               `json:"analysing,omitempty"`
-	ApproximateDuration float64                `json:"approximateDuration,omitempty"`
-	HasRetries          bool                   `json:"hasRetries,omitempty"`
-	Rerun               bool                   `json:"rerun,omitempty"`
-	Metadata            map[string]interface{} `json:"metadata,omitempty"`
-	RetentionPolicy     string                 `json:"retentionPolicy,omitempty" validate:"omitempty,oneof=IMPORTANT REGULAR"`
+	StartTime    time.Time `json:"startTime" validate:"required"`
+	EndTime      time.Time `json:"endTime,omitempty"`
+	LastModified time.Time `json:"lastModified"`
+	LaunchResource
 }
 
 func (rs *GetLaunchRS) Render(_ http.ResponseWriter, _ *http.Request) error {
@@ -146,25 +131,10 @@ func (rs *GetLaunchRS) Render(_ http.ResponseWriter, _ *http.Request) error {
 //
 // StartTime, EndTime, LastModified - Unix timestamp in milliseconds
 type GetLaunchOldRS struct {
-	ID                  int64                  `json:"id" validate:"required"`
-	UUID                string                 `json:"uuid" validate:"required"`
-	Name                string                 `json:"name" validate:"required"`
-	Number              int64                  `json:"number" validate:"required"`
-	Description         string                 `json:"description,omitempty"`
-	Status              model.LaunchStatus     `json:"status" validate:"required"`
-	Owner               string                 `json:"owner,omitempty"`
-	StartTime           int64                  `json:"startTime" validate:"required"`
-	EndTime             int64                  `json:"endTime,omitempty"`
-	LastModified        int64                  `json:"lastModified"`
-	Mode                model.LaunchMode       `json:"mode,omitempty"`
-	Statistics          Statistics             `json:"statistics,omitempty"`
-	Attributes          Attributes             `json:"attributes,omitempty"`
-	Analysing           []string               `json:"analysing,omitempty"`
-	ApproximateDuration float64                `json:"approximateDuration,omitempty"`
-	HasRetries          bool                   `json:"hasRetries,omitempty"`
-	Rerun               bool                   `json:"rerun,omitempty"`
-	Metadata            map[string]interface{} `json:"metadata,omitempty"`
-	RetentionPolicy     string                 `json:"retentionPolicy,omitempty" validate:"omitempty,oneof=IMPORTANT REGULAR"`
+	StartTime    int64 `json:"startTime" validate:"required"`
+	EndTime      int64 `json:"endTime,omitempty"`
+	LastModified int64 `json:"lastModified"`
+	LaunchResource
 }
 
 func (rs *GetLaunchOldRS) Render(_ http.ResponseWriter, _ *http.Request) error {
@@ -173,26 +143,47 @@ func (rs *GetLaunchOldRS) Render(_ http.ResponseWriter, _ *http.Request) error {
 
 func NewGetLaunchOldRS(launch model.Launch) *GetLaunchOldRS {
 	return &GetLaunchOldRS{
-		ID:                  launch.ID,
-		UUID:                launch.UUID,
-		Name:                launch.Name,
-		Description:         launch.Description,
-		Status:              launch.Status,
-		Owner:               launch.Owner,
-		StartTime:           launch.StartTime.UnixMilli(),
-		EndTime:             launch.EndTime.UnixMilli(),
-		LastModified:        launch.UpdatedAt.UnixMilli(),
-		ApproximateDuration: launch.Duration(),
-		Mode:                launch.Mode,
-		Statistics:          Statistics(launch.Statistics),
-		Attributes:          fromAttributesModel(launch.Attributes),
-		Rerun:               launch.IsRerun,
-		HasRetries:          launch.HasRetries,
-		Number:              0,
-		Analysing:           []string{},
-		Metadata:            map[string]interface{}{},
-		RetentionPolicy:     "REGULAR",
+		StartTime:    launch.StartTime.UnixMilli(),
+		EndTime:      launch.EndTime.UnixMilli(),
+		LastModified: launch.UpdatedAt.UnixMilli(),
+		LaunchResource: LaunchResource{
+			ID:                  launch.ID,
+			UUID:                launch.UUID,
+			Name:                launch.Name,
+			Description:         launch.Description,
+			Status:              launch.Status,
+			Owner:               launch.Owner,
+			ApproximateDuration: launch.Duration(),
+			Mode:                launch.Mode,
+			Statistics:          Statistics(launch.Statistics),
+			Attributes:          fromAttributesModel(launch.Attributes),
+			Rerun:               launch.IsRerun,
+			HasRetries:          launch.HasRetries,
+			Number:              0,
+			Analysing:           []string{},
+			Metadata:            map[string]interface{}{},
+			RetentionPolicy:     "REGULAR",
+		},
 	}
+}
+
+type LaunchResource struct {
+	ID                  int64                  `json:"id" validate:"required"`
+	UUID                string                 `json:"uuid" validate:"required"`
+	Name                string                 `json:"name" validate:"required"`
+	Number              int64                  `json:"number" validate:"required"`
+	Description         string                 `json:"description,omitempty"`
+	Status              model.LaunchStatus     `json:"status" validate:"required"`
+	Owner               string                 `json:"owner,omitempty"`
+	Mode                model.LaunchMode       `json:"mode,omitempty"`
+	Statistics          Statistics             `json:"statistics,omitempty"`
+	Attributes          []ItemAttribute        `json:"attributes,omitempty"`
+	Analysing           []string               `json:"analysing,omitempty"`
+	ApproximateDuration float64                `json:"approximateDuration,omitempty"`
+	HasRetries          bool                   `json:"hasRetries,omitempty"`
+	Rerun               bool                   `json:"rerun,omitempty"`
+	Metadata            map[string]interface{} `json:"metadata,omitempty"`
+	RetentionPolicy     string                 `json:"retentionPolicy,omitempty" validate:"omitempty,oneof=IMPORTANT REGULAR"`
 }
 
 type Statistics struct {
