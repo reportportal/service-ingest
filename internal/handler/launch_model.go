@@ -67,7 +67,7 @@ func (rq *FinishLaunchRQ) Bind(_ *http.Request) error {
 	return nil
 }
 
-func (rq *FinishLaunchRQ) toFinishLaunchModel() model.Launch {
+func (rq *FinishLaunchRQ) toLaunchModel() model.Launch {
 	return model.Launch{
 		EndTime:     &rq.EndTime,
 		Status:      rq.Status,
@@ -99,7 +99,7 @@ func (rq *UpdateLaunchRQ) Bind(_ *http.Request) error {
 	return nil
 }
 
-func (rq *UpdateLaunchRQ) toUpdateLaunchModel() model.Launch {
+func (rq *UpdateLaunchRQ) toLaunchModel() model.Launch {
 	return model.Launch{
 		Description: rq.Description,
 		Mode:        rq.Mode,

@@ -61,7 +61,7 @@ func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
 	launchUUID := chi.URLParam(r, "launchUuid")
 	projectName := chi.URLParam(r, "projectName")
 
-	err := h.service.FinishLaunch(projectName, launchUUID, data.toFinishLaunchModel())
+	err := h.service.FinishLaunch(projectName, launchUUID, data.toLaunchModel())
 	if err != nil {
 		render.Render(w, r, InternalServerError)
 		return
@@ -90,7 +90,7 @@ func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 	//
-	//err = h.service.UpdateLaunch(projectName, launchId, data.toUpdateLaunchModel())
+	//err = h.service.UpdateLaunch(projectName, launchId, data.toLaunchModel())
 	//if err != nil {
 	//	render.Render(w, r, InternalServerError)
 	//	return
