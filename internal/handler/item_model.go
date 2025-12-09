@@ -157,16 +157,16 @@ type Issue struct {
 	Type string `json:"issueType" validate:"required"`
 }
 
-type TestItemResourceNew struct {
+type TestItemResourceRS struct {
+	StartTime time.Time  `json:"startTime"`
+	EndTime   *time.Time `json:"endTime,omitempty"`
 	TestItemResource
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
 }
 
-type TestItemResourceOld struct {
+type TestItemResourceOldRS struct {
+	StartTime int64  `json:"startTime"`
+	EndTime   *int64 `json:"endTime,omitempty"`
 	TestItemResource
-	StartTime int64 `json:"startTime"`
-	EndTime   int64 `json:"endTime"`
 }
 
 type TestItemResource struct {
@@ -177,9 +177,9 @@ type TestItemResource struct {
 	CodeRef     string           `json:"codeRef"`
 	TestCaseId  string           `json:"testCaseId"`
 	Description string           `json:"description"`
-	Parameters  Parameters       `json:"parameters"`
-	Attributes  Attributes       `json:"attributes"`
-	Issue       string           `json:"issue"`
+	Parameters  Parameters       `json:"parameters,omitempty"`
+	Attributes  Attributes       `json:"attributes,omitempty"`
+	Issue       *Issue           `json:"issue,omitempty"`
 	UndefinedTestItemFields
 }
 

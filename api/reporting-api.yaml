@@ -853,10 +853,13 @@ components:
             $ref: '#/components/schemas/ParameterResource'
         uniqueId:
           type: string
+          description: Use the `testCaseId` instead. Unique identifier of the test item across launches.
+          deprecated: true
           maxLength: 1024
           minLength: 0
         testCaseId:
           type: string
+          description: Unique identifier of the test item across launches.
         type:
           type: string
           enum:
