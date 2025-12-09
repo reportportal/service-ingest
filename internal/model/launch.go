@@ -2,27 +2,6 @@ package model
 
 import "time"
 
-const (
-	LaunchModeDefault LaunchMode = "DEFAULT"
-	LaunchModeDebug   LaunchMode = "DEBUG"
-)
-
-const (
-	LaunchStatusInProgress  LaunchStatus = "IN_PROGRESS"
-	LaunchStatusPassed      LaunchStatus = "PASSED"
-	LaunchStatusFailed      LaunchStatus = "FAILED"
-	LaunchStatusStopped     LaunchStatus = "STOPPED"
-	LaunchStatusSkipped     LaunchStatus = "SKIPPED"
-	LaunchStatusInterrupted LaunchStatus = "INTERRUPTED"
-	LaunchStatusCancelled   LaunchStatus = "CANCELLED"
-	LaunchStatusInfo        LaunchStatus = "INFO"
-	LaunchStatusWarn        LaunchStatus = "WARN"
-)
-
-type LaunchMode string
-
-type LaunchStatus string
-
 type Launch struct {
 	ID          int64        `json:"id"`
 	UUID        string       `json:"uuid"`

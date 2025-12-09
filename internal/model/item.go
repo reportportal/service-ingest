@@ -2,35 +2,6 @@ package model
 
 import "time"
 
-const (
-	ItemTypeSuite        ItemType = "SUITE"
-	ItemTypeStory        ItemType = "STORY"
-	ItemTypeTest         ItemType = "TEST"
-	ItemTypeScenario     ItemType = "SCENARIO"
-	ItemTypeStep         ItemType = "STEP"
-	ItemTypeBeforeClass  ItemType = "BEFORE_CLASS"
-	ItemTypeBeforeGroups ItemType = "BEFORE_GROUPS"
-	ItemTypeBeforeMethod ItemType = "BEFORE_METHOD"
-	ItemTypeBeforeSuite  ItemType = "BEFORE_SUITE"
-	ItemTypeBeforeTest   ItemType = "BEFORE_TEST"
-	ItemTypeAfterClass   ItemType = "AFTER_CLASS"
-	ItemTypeAfterGroups  ItemType = "AFTER_GROUPS"
-	ItemTypeAfterMethod  ItemType = "AFTER_METHOD"
-	ItemTypeAfterSuite   ItemType = "AFTER_SUITE"
-	ItemTypeAfterTest    ItemType = "AFTER_TEST"
-)
-
-const (
-	ItemStatusPassed      ItemStatus = "PASSED"
-	ItemStatusFailed      ItemStatus = "FAILED"
-	ItemStatusSkipped     ItemStatus = "SKIPPED"
-	ItemStatusStopped     ItemStatus = "STOPPED"
-	ItemStatusInterrupted ItemStatus = "INTERRUPTED"
-	ItemStatusCancelled   ItemStatus = "CANCELLED"
-	ItemStatusInfo        ItemStatus = "INFO"
-	ItemStatusWarn        ItemStatus = "WARN"
-)
-
 type Item struct {
 	UUID        string     `json:"uuid"`
 	LaunchUUID  string     `json:"launch_uuid"`
@@ -50,10 +21,6 @@ type Item struct {
 	RetryOf     string     `json:"retry_of"`
 	Issue       Issue      `json:"issue"`
 }
-
-type ItemType string
-
-type ItemStatus string
 
 type Attribute struct {
 	Key      string `json:"key"`
