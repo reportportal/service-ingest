@@ -39,7 +39,7 @@ type Item struct {
 	Type        ItemType   `json:"type"`
 	Status      ItemStatus `json:"status"`
 	StartTime   time.Time  `json:"start_time"`
-	EndTime     time.Time  `json:"end_time"`
+	EndTime     *time.Time `json:"end_time"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 	Attributes  Attributes `json:"attributes"`
 	Parameters  Parameters `json:"parameters"`

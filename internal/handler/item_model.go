@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
@@ -21,9 +22,10 @@ type StartTestItemRQ struct {
 	HasStats    bool           `json:"hasStats,omitempty"`
 	RetryOf     string         `json:"retryOf,omitempty" validate:"omitempty,uuid"`
 	Type        model.ItemType `json:"type" validate:"required,oneof=SUITE STORY TEST SCENARIO STEP BEFORE_CLASS BEFORE_GROUPS BEFORE_METHOD BEFORE_SUITE BEFORE_TEST AFTER_CLASS AFTER_GROUPS AFTER_METHOD AFTER_SUITE AFTER_TEST"`
+	parentUUID  string
 }
 
-func (rq *StartTestItemRQ) Bind(_ *http.Request) error {
+func (rq *StartTestItemRQ) Bind(r *http.Request) error {
 	if err := validate.Struct(rq); err != nil {
 		return err
 	}
@@ -35,6 +37,8 @@ func (rq *StartTestItemRQ) Bind(_ *http.Request) error {
 	if rq.TestCaseId == "" {
 		rq.TestCaseId = rq.CodeRef
 	}
+
+	rq.parentUUID = chi.URLParam(r, "itemUuid")
 
 	return nil
 }
@@ -51,6 +55,7 @@ func (rq *StartTestItemRQ) toItemModel() model.Item {
 		Parameters:  rq.Parameters.toParametersModel(),
 		CodeRef:     rq.CodeRef,
 		TestCaseId:  rq.TestCaseId,
+		ParentUUID:  rq.parentUUID,
 		IsRetry:     rq.IsRetry,
 		RetryOf:     rq.RetryOf,
 	}
@@ -90,7 +95,7 @@ func (rq *FinishTestItemRQ) Bind(_ *http.Request) error {
 func (rq *FinishTestItemRQ) toItemModel() model.Item {
 	return model.Item{
 		LaunchUUID:  rq.LaunchUUID,
-		EndTime:     rq.EndTime,
+		EndTime:     &rq.EndTime,
 		Status:      rq.Status,
 		Attributes:  rq.Attributes.toAttributesModel(),
 		Description: rq.Description,
@@ -164,9 +169,37 @@ type TestItemResourceRS struct {
 }
 
 type TestItemResourceOldRS struct {
-	StartTime int64  `json:"startTime"`
-	EndTime   *int64 `json:"endTime,omitempty"`
+	StartTime int64 `json:"startTime"`
+	EndTime   int64 `json:"endTime,omitempty"`
 	TestItemResource
+}
+
+func NewTestItemResourceOldRS(item model.Item) *TestItemResourceOldRS {
+	var endTime int64
+	if item.EndTime != nil {
+		endTime = item.EndTime.UnixMilli()
+	}
+
+	return &TestItemResourceOldRS{
+		StartTime: item.StartTime.UnixMilli(),
+		EndTime:   endTime,
+		TestItemResource: TestItemResource{
+			UUID:        item.UUID,
+			Name:        item.Name,
+			Type:        item.Type,
+			Status:      item.Status,
+			CodeRef:     item.CodeRef,
+			TestCaseId:  item.TestCaseId,
+			Description: item.Description,
+			Parameters:  fromParametersModel(item.Parameters),
+			Attributes:  fromAttributesModel(item.Attributes),
+			Issue:       Issue(item.Issue),
+		},
+	}
+}
+
+func (rs *TestItemResourceOldRS) Render(_ http.ResponseWriter, _ *http.Request) error {
+	return nil
 }
 
 type TestItemResource struct {
@@ -179,7 +212,7 @@ type TestItemResource struct {
 	Description string           `json:"description"`
 	Parameters  Parameters       `json:"parameters,omitempty"`
 	Attributes  Attributes       `json:"attributes,omitempty"`
-	Issue       *Issue           `json:"issue,omitempty"`
+	Issue       Issue            `json:"issue,omitempty"`
 	UndefinedTestItemFields
 }
 

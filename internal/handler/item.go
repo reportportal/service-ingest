@@ -4,9 +4,13 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	"github.com/reportportal/service-ingest/internal/service"
 )
 
-type itemHandler struct{}
+type itemHandler struct {
+	service *service.ItemService
+}
 
 func (h itemHandler) routesV1() chi.Router {
 	r := chi.NewRouter()
@@ -19,25 +23,60 @@ func (h itemHandler) routesV1() chi.Router {
 func (h itemHandler) routesV2() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/", h.startRootItem)
-	r.Post("/{itemUuid}", h.startChildItem)
+	r.Post("/", h.startItem)
+	r.Post("/{itemUuid}", h.startItem)
 	r.Put("/{itemUuid}", h.finishTestItem)
 
 	return r
 }
 
-func (h itemHandler) startRootItem(w http.ResponseWriter, r *http.Request) {
-	RespondNotImplemented(w, r)
-}
+func (h itemHandler) startItem(w http.ResponseWriter, r *http.Request) {
+	data := &StartTestItemRQ{}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, InvalidRequestError(err))
+		return
+	}
 
-func (h itemHandler) startChildItem(w http.ResponseWriter, r *http.Request) {
-	RespondNotImplemented(w, r)
+	projectName := chi.URLParam(r, "projectName")
+
+	if err := h.service.StartItem(projectName, data.toItemModel()); err != nil {
+		render.Render(w, r, InternalServerError)
+		return
+	}
+
+	render.Status(r, http.StatusCreated)
+	render.Render(w, r, &StartTestItemRS{UUID: data.UUID})
 }
 
 func (h itemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
-	RespondNotImplemented(w, r)
+	data := &FinishTestItemRQ{}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, InvalidRequestError(err))
+		return
+	}
+
+	projectName := chi.URLParam(r, "projectName")
+	itemUUID := chi.URLParam(r, "itemUuid")
+
+	if err := h.service.FinishItem(projectName, itemUUID, data.toItemModel()); err != nil {
+		render.Render(w, r, InternalServerError)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.Render(w, r, &FinishTestItemRS{Message: "Item finished successfully"})
 }
 
 func (h itemHandler) getTestItem(w http.ResponseWriter, r *http.Request) {
-	RespondNotImplemented(w, r)
+	projectName := chi.URLParam(r, "projectName")
+	itemUUID := chi.URLParam(r, "itemUuid")
+
+	item, err := h.service.GetItem(projectName, itemUUID)
+	if err != nil {
+		render.Render(w, r, InternalServerError)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.Render(w, r, NewTestItemResourceOldRS(item))
 }
