@@ -6,19 +6,28 @@ import (
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
-type ItemService struct{}
+type ItemService struct {
+	itemRepo ItemRepository
+}
 
-func NewItemService() *ItemService {
-	return &ItemService{}
+func NewItemService(repo ItemRepository) *ItemService {
+	return &ItemService{repo}
 }
 
 func (s *ItemService) StartItem(project string, item model.Item) error {
+	if err := s.itemRepo.Create(project, item); err != nil {
+		return err
+	}
 	fmt.Printf("Project: %s\nSaving item:\n%+v\n", project, item)
 	return nil
 }
 
 func (s *ItemService) FinishItem(project string, itemUUID string, item model.Item) error {
-	fmt.Printf("Project: %s\nFinishing item %s:\n%+v\n", project, itemUUID, item)
+	item.UUID = itemUUID
+	if err := s.itemRepo.Update(project, item); err != nil {
+		return err
+	}
+	fmt.Printf("Project: %s\nFinishing item %+v\n", project, item)
 	return nil
 }
 
