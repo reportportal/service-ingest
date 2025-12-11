@@ -3,7 +3,7 @@ package service
 import "github.com/reportportal/service-ingest/internal/model"
 
 type LaunchRepository interface {
-	Create(launch model.Launch) error
-	GetByUUID(uuid string) (*model.Launch, error)
-	Update(launch model.Launch) error
+	Get(project string, uuid string) (*model.Launch, error)
+	Create(project string, launch model.Launch) error
+	Update(project string, launch model.Launch) error
 }
