@@ -147,7 +147,7 @@ func NewGetLaunchOldRS(launch model.Launch) *GetLaunchOldRS {
 		EndTime:      launch.EndTime.UnixMilli(),
 		LastModified: launch.UpdatedAt.UnixMilli(),
 		LaunchResource: LaunchResource{
-			ID:                  launch.ID,
+			ID:                  0,
 			UUID:                launch.UUID,
 			Name:                launch.Name,
 			Description:         launch.Description,
