@@ -3,22 +3,20 @@ package model
 import "time"
 
 type Launch struct {
-	ID          int64        `json:"id"`
-	UUID        string       `json:"uuid"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Status      LaunchStatus `json:"status"`
-	Owner       string       `json:"owner"`
-	StartTime   time.Time    `json:"stat_time"`
-	EndTime     *time.Time   `json:"end_time"`
-	UpdatedAt   time.Time    `json:"updated_at"`
-	Mode        LaunchMode   `json:"mode"`
-	Statistics  Statistics   `json:"statistics"`
-	Attributes  []Attribute  `json:"attributes"`
-	IsRerun     bool         `json:"isRerun"`
-	RerunOf     string       `json:"rerunOf"`
-	HasRetries  bool         `json:"hasRetries"`
-	// Number      int64        `json:"number" `
+	UUID        string
+	Name        string
+	Description string
+	Status      LaunchStatus
+	Owner       string
+	StartTime   time.Time
+	EndTime     *time.Time
+	UpdatedAt   time.Time
+	Mode        LaunchMode
+	Statistics  Statistics
+	Attributes  []Attribute
+	IsRerun     bool
+	RerunOf     string
+	HasRetries  bool
 }
 
 type Statistics struct {
