@@ -19,7 +19,10 @@ handlers and the data layer.
 service/
 ├── launch.go        # Launch business logic
 ├── launch_repo.go   # Launch repository interface
-└── item.go          # Test item business logic
+├── item.go          # Test item business logic
+├── item_repo.go     # Test item repository interface
+├── log.go           # Test log business logic
+└── log_repo.go      # Test log repository interface
 ```
 
 ## When to Add Interfaces
