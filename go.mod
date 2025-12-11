@@ -3,11 +3,12 @@ module github.com/reportportal/service-ingest
 go 1.25
 
 require (
+	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/render v1.0.3
 	github.com/go-playground/validator/v10 v10.28.0
-	github.com/caarlos0/env/v11 v11.3.1
 	github.com/joho/godotenv v1.5.1
+	github.com/google/uuid v1.6.0
 )
 
 require (
