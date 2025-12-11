@@ -1,24 +1,31 @@
 package service
 
 import (
-	"fmt"
 	"mime/multipart"
 
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
-type LogService struct{}
+type LogService struct {
+	logRepo LogRepository
+}
 
-func NewLogService() *LogService {
-	return &LogService{}
+func NewLogService(repo LogRepository) *LogService {
+	return &LogService{repo}
 }
 
 func (s *LogService) SaveLog(project string, log model.Log) error {
+	if err := s.logRepo.Create(project, log); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (s *LogService) SaveLogs(project string, logs []model.Log, files []*multipart.FileHeader) error {
-	fmt.Printf("Saving %d logs for project %s\n", len(logs), project)
-	fmt.Printf("Saving %d files for project %s\n", len(files), project)
+	if err := s.logRepo.CreateLogs(project, logs, files); err != nil {
+		return err
+	}
+
 	return nil
 }
