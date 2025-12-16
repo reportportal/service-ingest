@@ -16,24 +16,93 @@ and returning HTTP responses.
 
 ```text
 handler/
-├── launch.go        # Launch-related endpoints
-├── item.go          # Test item endpoints
-├── log.go           # Log-related endpoints
+├── launch.go        # Launch-related endpoints and LaunchHandler type
+├── launch_model.go  # Launch request/response models
+├── item.go          # Test item endpoints and ItemHandler type
+├── item_model.go    # Item request/response models
+├── log.go           # Log-related endpoints and LogHandler type
+├── log_model.go     # Log request/response models
 ├── info.go          # Service info endpoints
 ├── health.go        # Health check endpoints
-├── router.go        # Route registration and middleware setup
-├── middleware.go    # Custom HTTP middleware (auth, logging, etc.)
+├── route.go         # Router setup, Handlers struct, and route registration
+├── middleware.go    # Custom HTTP middleware (parsing, validation, etc.)
+├── validator.go     # Validator singleton and configuration
 └── error.go         # Error handling models and utilities
 ```
 
+## Handler Initialization
+
+Each handler is a struct with dependencies injected via constructor:
+
+```go
+type LaunchHandler struct {
+    service *service.LaunchService
+}
+
+func NewLaunchHandler(svc *service.LaunchService) *LaunchHandler {
+    return &LaunchHandler{service: svc}
+}
+```
+
+Similarly, for `ItemHandler` and `LogHandler`.
+
+## Handlers Container
+
+All handlers are grouped in a `Handlers` struct for easier dependency management:
+
+```go
+type Handlers struct {
+    Launch *LaunchHandler
+    Item   *ItemHandler
+    Log    *LogHandler
+}
+```
+
+This container is passed to `NewRouter()` during initialization.
+
 ## Router Setup
 
-The `router.go` file sets up all routes and middleware.
+The `route.go` file contains:
+- `Handlers` struct - container for all handlers
+- `NewRouter(basePath string, handlers Handlers)` - sets up routes and middleware
+- `apiRouter(handlers Handlers)` - configures API routes
 
+Example usage from `internal/app/app.go`:
 
-## Handler models
+```go
+handlers := handler.Handlers{
+    Launch: handler.NewLaunchHandler(launchService),
+    Item:   handler.NewItemHandler(itemService),
+    Log:    handler.NewLogHandler(logService),
+}
 
-Handlers use request and response models defined in the `*_dto.go` files to structure incoming and outgoing data.
+router := handler.NewRouter(cfg.Server.BasePath, handlers)
+```
+
+## Handler Models
+
+Handlers use request and response models defined in `*_model.go` files to structure incoming and outgoing data.
+
+## Validation
+
+The `validator.go` file provides a singleton validator instance using `github.com/go-playground/validator/v10`:
+
+```go
+var validate = validator.New()
+```
+
+The validator is configured to use JSON field names in validation error messages instead of struct field names. This is initialized once using `sync.Once` pattern via `initValidatorOnce()` which is called during router setup.
+
+Model structs use validation tags:
+
+```go
+type StartLaunchRQ struct {
+    Name string `json:"name" validate:"required"`
+    UUID string `json:"uuid" validate:"omitempty,uuid"`
+}
+```
+
+Validation is performed in request binding methods using the shared validator instance.
 
 ## Dependencies
 
