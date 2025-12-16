@@ -142,6 +142,11 @@ func (rs *GetLaunchOldRS) Render(_ http.ResponseWriter, _ *http.Request) error {
 }
 
 func NewGetLaunchOldRS(launch model.Launch) *GetLaunchOldRS {
+	if launch.EndTime == nil {
+		empty := time.Time{}
+		launch.EndTime = &empty
+	}
+
 	return &GetLaunchOldRS{
 		StartTime:    launch.StartTime.UnixMilli(),
 		EndTime:      launch.EndTime.UnixMilli(),
