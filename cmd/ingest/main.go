@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
+	"github.com/reportportal/service-ingest/internal/app"
 	"github.com/reportportal/service-ingest/internal/config"
-	"github.com/reportportal/service-ingest/internal/handler"
 )
 
 func main() {
@@ -14,11 +15,18 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	router := handler.NewRouter(cfg.Server.BasePath)
+	server, err := app.New(cfg)
+	if err != nil {
+		log.Fatalf("failed to start new server: %v", err)
+	}
 
-	addr := cfg.Server.Addr()
-	log.Printf("Starting server on %s (env: %s, base path: %s)", addr, cfg.Server.Env, cfg.Server.BasePath)
-	if err := http.ListenAndServe(addr, router); err != nil {
+	log.Printf("Starting server on %s (env: %s, base path: %s)",
+		cfg.Server.Addr(),
+		cfg.Server.Env,
+		cfg.Server.BasePath,
+	)
+
+	if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("server failed: %v", err)
 	}
 }
