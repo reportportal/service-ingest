@@ -44,14 +44,14 @@ func (h LaunchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	projectName := chi.URLParam(r, "projectName")
-	err := h.service.StartLaunch(projectName, data.toLaunchModel())
+	uuid, err := h.service.StartLaunch(projectName, data.toLaunchModel())
 	if err != nil {
 		render.Render(w, r, InternalServerError)
 		return
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, &StartLaunchRS{UUID: data.UUID})
+	render.Render(w, r, &StartLaunchRS{UUID: uuid})
 }
 
 func (h LaunchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {

@@ -24,7 +24,7 @@ func (s *LaunchService) GetLaunch(project string, uuid string) (*model.Launch, e
 	return launch, nil
 }
 
-func (s *LaunchService) StartLaunch(project string, launch model.Launch) error {
+func (s *LaunchService) StartLaunch(project string, launch model.Launch) (string, error) {
 	launch.UpdatedAt = time.Now().UTC()
 	launch.Status = model.LaunchStatusInProgress
 
@@ -33,10 +33,10 @@ func (s *LaunchService) StartLaunch(project string, launch model.Launch) error {
 	}
 
 	if err := s.launchRepo.Create(project, launch); err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return launch.UUID, nil
 }
 
 func (s *LaunchService) FinishLaunch(project string, launchUUID string, launch model.Launch) error {
