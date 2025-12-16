@@ -7,8 +7,15 @@ import (
 
 // validate is a singleton validator instance used for struct validation across handlers.
 
-func NewRouter(basePath string, launchHandler LaunchHandler, itemHandler ItemHandler, logHandler LogHandler) chi.Router {
+type Handlers struct {
+	Launch *LaunchHandler
+	Item   *ItemHandler
+	Log    *LogHandler
+}
+
+func NewRouter(basePath string, handlers Handlers) chi.Router {
 	initValidatorOnce()
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -18,25 +25,25 @@ func NewRouter(basePath string, launchHandler LaunchHandler, itemHandler ItemHan
 	r.Route(basePath, func(r chi.Router) {
 		r.Mount("/info", infoRouter())
 		r.Mount("/health", healthRouter())
-		r.Mount("/", apiRouter(launchHandler, itemHandler, logHandler))
+		r.Mount("/", apiRouter(handlers))
 	})
 
 	return r
 }
 
-func apiRouter(launchHandler LaunchHandler, itemHandler ItemHandler, logHandler LogHandler) chi.Router {
+func apiRouter(h Handlers) chi.Router {
 	r := chi.NewRouter()
 
-	r.Route("v1/{projectName}", func(r chi.Router) {
-		r.Mount("/launch", launchHandler.routesV1())
-		r.Mount("/item", itemHandler.routesV1())
+	r.Route("/v1/{projectName}", func(r chi.Router) {
+		r.Mount("/launch", h.Launch.routesV1())
+		r.Mount("/item", h.Item.routesV1())
 		r.Get("/settings", RespondNotImplemented)
 	})
 
-	r.Route("v2/{projectName}", func(r chi.Router) {
-		r.Mount("/launch", launchHandler.routesV2())
-		r.Mount("/item", itemHandler.routesV2())
-		r.Mount("/log", logHandler.routes())
+	r.Route("/v2/{projectName}", func(r chi.Router) {
+		r.Mount("/launch", h.Launch.routesV2())
+		r.Mount("/item", h.Item.routesV2())
+		r.Mount("/log", h.Log.routes())
 	})
 
 	return r
