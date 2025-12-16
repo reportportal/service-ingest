@@ -13,6 +13,7 @@ var (
 	initValidateOnce sync.Once
 )
 
+// initValidatorOnce initializes the validator singleton with custom settings.
 func initValidatorOnce() {
 	initValidateOnce.Do(func() {
 		validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
