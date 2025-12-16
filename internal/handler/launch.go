@@ -8,11 +8,15 @@ import (
 	"github.com/reportportal/service-ingest/internal/service"
 )
 
-type launchHandler struct {
+type LaunchHandler struct {
 	service *service.LaunchService
 }
 
-func (h launchHandler) routesV1() chi.Router {
+func NewLaunchHandler(svc *service.LaunchService) *LaunchHandler {
+	return &LaunchHandler{service: svc}
+}
+
+func (h LaunchHandler) routesV1() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/uuid/{launchUuid}", h.getLaunch)
@@ -21,7 +25,7 @@ func (h launchHandler) routesV1() chi.Router {
 	return r
 }
 
-func (h launchHandler) routesV2() chi.Router {
+func (h LaunchHandler) routesV2() chi.Router {
 	r := chi.NewRouter()
 
 	r.Post("/", h.startLaunch)
@@ -31,7 +35,7 @@ func (h launchHandler) routesV2() chi.Router {
 	return r
 }
 
-func (h launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
+func (h LaunchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
 	data := &StartLaunchRQ{}
 
 	if err := render.Bind(r, data); err != nil {
@@ -50,7 +54,7 @@ func (h launchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, &StartLaunchRS{UUID: data.UUID})
 }
 
-func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
+func (h LaunchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
 	data := &FinishLaunchRQ{}
 
 	if err := render.Bind(r, data); err != nil {
@@ -74,7 +78,7 @@ func (h launchHandler) finishLaunch(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
+func (h LaunchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
 	RespondNotImplemented(w, r)
 	//data := &UpdateLaunchRQ{}
 	//
@@ -100,7 +104,7 @@ func (h launchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
 	//render.Render(w, r, &UpdateLaunchRS{Message: "Launch updated successfully"})
 }
 
-func (h launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
+func (h LaunchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
 	RespondNotImplemented(w, r)
 	//projectName := chi.URLParam(r, "projectName")
 	//launchUUID := chi.URLParam(r, "launchUuid")
@@ -115,6 +119,6 @@ func (h launchHandler) getLaunch(w http.ResponseWriter, r *http.Request) {
 	//render.Render(w, r, NewGetLaunchOldRS(launch))
 }
 
-func (h launchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
+func (h LaunchHandler) mergeLaunch(w http.ResponseWriter, r *http.Request) {
 	RespondNotImplemented(w, r)
 }

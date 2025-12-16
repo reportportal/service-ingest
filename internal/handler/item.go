@@ -8,11 +8,15 @@ import (
 	"github.com/reportportal/service-ingest/internal/service"
 )
 
-type itemHandler struct {
+type ItemHandler struct {
 	service *service.ItemService
 }
 
-func (h itemHandler) routesV1() chi.Router {
+func NewItemHandler(svc *service.ItemService) *ItemHandler {
+	return &ItemHandler{service: svc}
+}
+
+func (h ItemHandler) routesV1() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/uuid/{itemUuid}", h.getTestItem)
@@ -20,7 +24,7 @@ func (h itemHandler) routesV1() chi.Router {
 	return r
 }
 
-func (h itemHandler) routesV2() chi.Router {
+func (h ItemHandler) routesV2() chi.Router {
 	r := chi.NewRouter()
 
 	r.Post("/", h.startItem)
@@ -30,7 +34,7 @@ func (h itemHandler) routesV2() chi.Router {
 	return r
 }
 
-func (h itemHandler) startItem(w http.ResponseWriter, r *http.Request) {
+func (h ItemHandler) startItem(w http.ResponseWriter, r *http.Request) {
 	data := &StartTestItemRQ{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, InvalidRequestError(err))
@@ -48,7 +52,7 @@ func (h itemHandler) startItem(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, &StartTestItemRS{UUID: data.UUID})
 }
 
-func (h itemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
+func (h ItemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
 	data := &FinishTestItemRQ{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, InvalidRequestError(err))
@@ -67,7 +71,7 @@ func (h itemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, &FinishTestItemRS{Message: "Item finished successfully"})
 }
 
-func (h itemHandler) getTestItem(w http.ResponseWriter, r *http.Request) {
+func (h ItemHandler) getTestItem(w http.ResponseWriter, r *http.Request) {
 	projectName := chi.URLParam(r, "projectName")
 	itemUUID := chi.URLParam(r, "itemUuid")
 

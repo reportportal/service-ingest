@@ -9,11 +9,15 @@ import (
 	"github.com/reportportal/service-ingest/internal/service"
 )
 
-type logHandler struct {
-	logService service.LogService
+type LogHandler struct {
+	logService *service.LogService
 }
 
-func (h logHandler) routes() chi.Router {
+func NewLogHandler(logService *service.LogService) *LogHandler {
+	return &LogHandler{logService: logService}
+}
+
+func (h LogHandler) routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.With(ParseMultipartForm).Post("/", h.createLog)
@@ -21,7 +25,7 @@ func (h logHandler) routes() chi.Router {
 	return r
 }
 
-func (h logHandler) createLog(w http.ResponseWriter, r *http.Request) {
+func (h LogHandler) createLog(w http.ResponseWriter, r *http.Request) {
 	if r.MultipartForm != nil {
 		h.saveBatch(w, r)
 		return
@@ -30,7 +34,7 @@ func (h logHandler) createLog(w http.ResponseWriter, r *http.Request) {
 	h.saveLog(w, r)
 }
 
-func (h logHandler) saveBatch(w http.ResponseWriter, r *http.Request) {
+func (h LogHandler) saveBatch(w http.ResponseWriter, r *http.Request) {
 	defer r.MultipartForm.RemoveAll()
 
 	batch := &SaveLogBatchRQ{}
@@ -61,7 +65,7 @@ func (h logHandler) saveBatch(w http.ResponseWriter, r *http.Request) {
 	render.Render(w, r, &SaveLogRS{Responses: rs})
 }
 
-func (h logHandler) saveLog(w http.ResponseWriter, r *http.Request) {
+func (h LogHandler) saveLog(w http.ResponseWriter, r *http.Request) {
 	data := &SaveLogRQ{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, InvalidRequestError(err))
