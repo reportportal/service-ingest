@@ -1,47 +1,43 @@
 package handler
 
 import (
-	"reflect"
-	"strings"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-playground/validator/v10"
 )
 
 // validate is a singleton validator instance used for struct validation across handlers.
-var validate = validator.New()
 
-func NewRouter(basePath string) chi.Router {
+func NewRouter(basePath string, launchHandler LaunchHandler, itemHandler ItemHandler, logHandler LogHandler) chi.Router {
+	initValidatorOnce()
 	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Mount(basePath+"/info", infoRouter())
-	r.Mount(basePath+"/health", healthRouter())
-	r.Mount(basePath, apiRouter())
-
-	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-		if name == "-" {
-			return ""
-		}
-		return name
+	r.Route(basePath, func(r chi.Router) {
+		r.Mount("/info", infoRouter())
+		r.Mount("/health", healthRouter())
+		r.Mount("/", apiRouter(launchHandler, itemHandler, logHandler))
 	})
 
 	return r
 }
 
-func apiRouter() chi.Router {
+func apiRouter(launchHandler LaunchHandler, itemHandler ItemHandler, logHandler LogHandler) chi.Router {
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
 
-	r.Mount("/v1/{projectName}/launch", launchHandler{}.routesV1())
-	r.Mount("/v2/{projectName}/launch", launchHandler{}.routesV2())
-	r.Mount("/v1/{projectName}/item", itemHandler{}.routesV1())
-	r.Mount("/v2/{projectName}/item", itemHandler{}.routesV2())
-	r.Mount("/v2/{projectName}/log", logHandler{}.routes())
-	r.Get("/v1/{projectName}/settings", RespondNotImplemented)
+	r.Route("v1/{projectName}", func(r chi.Router) {
+		r.Mount("/launch", launchHandler.routesV1())
+		r.Mount("/item", itemHandler.routesV1())
+		r.Get("/settings", RespondNotImplemented)
+	})
+
+	r.Route("v2/{projectName}", func(r chi.Router) {
+		r.Mount("/launch", launchHandler.routesV2())
+		r.Mount("/item", itemHandler.routesV2())
+		r.Mount("/log", logHandler.routes())
+	})
 
 	return r
 }
