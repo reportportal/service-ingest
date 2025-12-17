@@ -22,7 +22,7 @@ func (s *LocalStorage) fullPath(key string) string {
 }
 
 // Put writes data from reader to the specified key.
-func (s *LocalStorage) Put(ctx context.Context, key string, r io.Reader) error {
+func (s *LocalStorage) Put(_ context.Context, key string, r io.Reader) error {
 	fullPath := s.fullPath(key)
 
 	// Create parent directories
@@ -45,7 +45,7 @@ func (s *LocalStorage) Put(ctx context.Context, key string, r io.Reader) error {
 }
 
 // Get returns a reader for the specified key.
-func (s *LocalStorage) Get(ctx context.Context, key string) (io.ReadCloser, error) {
+func (s *LocalStorage) Get(_ context.Context, key string) (io.ReadCloser, error) {
 	fullPath := s.fullPath(key)
 	file, err := os.Open(fullPath)
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *LocalStorage) Get(ctx context.Context, key string) (io.ReadCloser, erro
 }
 
 // Delete removes the file at the specified key.
-func (s *LocalStorage) Delete(ctx context.Context, key string) error {
+func (s *LocalStorage) Delete(_ context.Context, key string) error {
 	fullPath := s.fullPath(key)
 	if err := os.Remove(fullPath); err != nil {
 		return fmt.Errorf("failed to delete file: %w", err)
@@ -64,7 +64,7 @@ func (s *LocalStorage) Delete(ctx context.Context, key string) error {
 }
 
 // Exists checks if a file exists at the specified key.
-func (s *LocalStorage) Exists(ctx context.Context, key string) (bool, error) {
+func (s *LocalStorage) Exists(_ context.Context, key string) (bool, error) {
 	fullPath := s.fullPath(key)
 	_, err := os.Stat(fullPath)
 	if err == nil {
