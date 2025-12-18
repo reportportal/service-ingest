@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"log/slog"
 
 	"github.com/reportportal/service-ingest/internal/model"
 )
@@ -15,24 +15,24 @@ func NewItemService(repo ItemRepository) *ItemService {
 }
 
 func (s *ItemService) StartItem(project string, item model.Item) error {
-	if err := s.itemRepo.Create(project, item); err != nil {
+	if err := s.itemRepo.Start(project, item); err != nil {
 		return err
 	}
-	fmt.Printf("Project: %s\nSaving item:\n%+v\n", project, item)
+	slog.Debug("Started item", "project", project, "item", item)
 	return nil
 }
 
 func (s *ItemService) FinishItem(project string, itemUUID string, item model.Item) error {
 	item.UUID = itemUUID
-	if err := s.itemRepo.Update(project, item); err != nil {
+	if err := s.itemRepo.Finish(project, item); err != nil {
 		return err
 	}
-	fmt.Printf("Project: %s\nFinishing item %+v\n", project, item)
+	slog.Debug("Finished item", "project", project, "item", item)
 	return nil
 }
 
 func (s *ItemService) GetItem(project string, itemUUID string) (model.Item, error) {
-	fmt.Printf("Project: %s\nGetting item %s\n", project, itemUUID)
+	slog.Debug("Getting item", "project", project, "itemUUID", itemUUID)
 	return model.Item{
 		UUID:       itemUUID,
 		LaunchUUID: "example-launch-uuid",

@@ -32,7 +32,7 @@ func (s *LaunchService) StartLaunch(project string, launch model.Launch) (string
 		launch.UUID = uuid.New().String()
 	}
 
-	if err := s.launchRepo.Create(project, launch); err != nil {
+	if err := s.launchRepo.Start(project, launch); err != nil {
 		return "", err
 	}
 
