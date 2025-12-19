@@ -12,7 +12,6 @@ import (
 
 type BadgerBuffer struct {
 	db            *badger.DB
-	processorID   string
 	leaseDuration time.Duration
 }
 
@@ -38,17 +37,12 @@ func NewBadgerBuffer(path string, leaseDuration time.Duration) (*BadgerBuffer, e
 
 	return &BadgerBuffer{
 		db:            db,
-		processorID:   uuid.New().String(),
 		leaseDuration: leaseDuration,
 	}, nil
 }
 
 func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
-	key := fmt.Sprintf("%s/%d-%s",
-		envelope.EntityType,
-		envelope.Timestamp.UnixNano(),
-		envelope.ID,
-	)
+	key := buildKey(envelope)
 
 	data, err := json.Marshal(envelope)
 	if err != nil {
@@ -59,16 +53,34 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		return txn.Set([]byte(key), data)
+
+		if err := txn.Set(key, data); err != nil {
+			return err
+		}
+
+		if err := updateCounter(txn, counterKeyCount, 1); err != nil {
+			return fmt.Errorf("failed to update count: %w", err)
+		}
+		if err := updateCounter(txn, counterKeySize, envelope.Size); err != nil {
+			return fmt.Errorf("failed to update size: %w", err)
+		}
+
+		return nil
 	})
 }
 
-func (b *BadgerBuffer) Read(ctx context.Context, limit int) ([]EventEnvelope, error) {
-	var envelopes []EventEnvelope
+// TODO: Consider option to read by EventEnvelope.EntityType
+func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEnvelope, err error) {
+	readID := uuid.New().String()
 
-	err := b.db.Update(func(txn *badger.Txn) error {
+	err = b.db.Update(func(txn *badger.Txn) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = limit
+		opts.Prefix = []byte("event:")
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
@@ -78,25 +90,20 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) ([]EventEnvelope, er
 		for it.Rewind(); it.Valid() && len(envelopes) < limit; it.Next() {
 			item := it.Item()
 
-			// Read value
 			var envelope EventEnvelope
-			err := item.Value(func(val []byte) error {
+			if err := item.Value(func(val []byte) error {
 				return json.Unmarshal(val, &envelope)
-			})
-			if err != nil {
-				continue // skip malformed entries
+			}); err != nil {
+				continue
 			}
 
-			// Check if available
 			if !envelope.IsAvailable() {
 				continue
 			}
 
-			// Set lease
-			envelope.LeaseID = b.processorID
+			envelope.LeaseID = readID
 			envelope.LeaseExpiresAt = &leaseExpiry
 
-			// Update in BadgerDB
 			data, err := json.Marshal(envelope)
 			if err != nil {
 				return fmt.Errorf("failed to marshal envelope: %w", err)
@@ -115,22 +122,98 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) ([]EventEnvelope, er
 	return envelopes, err
 }
 
-func (b *BadgerBuffer) Ack(ctx context.Context, ids []string) error {
-	//TODO implement me
-	panic("implement me")
+func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
+	if len(events) == 0 {
+		return nil
+	}
+
+	return b.db.Update(func(txn *badger.Txn) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		var totalSize int64
+
+		for _, envelope := range events {
+			key := buildKey(envelope)
+			totalSize += envelope.Size
+			if err := txn.Delete(key); err != nil {
+				return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
+			}
+		}
+
+		if err := updateCounter(txn, counterKeyCount, -int64(len(events))); err != nil {
+			return fmt.Errorf("failed to update count: %w", err)
+		}
+		if err := updateCounter(txn, counterKeySize, -totalSize); err != nil {
+			return fmt.Errorf("failed to update size: %w", err)
+		}
+
+		return nil
+	})
 }
 
-func (b *BadgerBuffer) Release(ctx context.Context, ids []string) error {
-	//TODO implement me
-	panic("implement me")
+func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) error {
+	if len(events) == 0 {
+		return nil
+	}
+
+	return b.db.Update(func(txn *badger.Txn) error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		for _, envelope := range events {
+			envelope.LeaseID = ""
+			envelope.LeaseExpiresAt = nil
+
+			data, err := json.Marshal(envelope)
+			if err != nil {
+				return fmt.Errorf("failed to marshal envelope: %w", err)
+			}
+
+			key := buildKey(envelope)
+			if err := txn.Set(key, data); err != nil {
+				return fmt.Errorf("failed to release envelope %s: %w", envelope.ID, err)
+			}
+		}
+
+		return nil
+	})
 }
 
 func (b *BadgerBuffer) Size(ctx context.Context) (count int, bytes int64, err error) {
-	//TODO implement me
-	panic("implement me")
+	err = b.db.View(func(txn *badger.Txn) error {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
+
+		countVal, err := getCounter(txn, counterKeyCount)
+		if err != nil {
+			return fmt.Errorf("failed to get count: %w", err)
+		}
+		count = int(countVal)
+
+		sizeVal, err := getCounter(txn, counterKeySize)
+		if err != nil {
+			return fmt.Errorf("failed to get size: %w", err)
+		}
+		bytes = sizeVal
+
+		return nil
+	})
+
+	return count, bytes, err
 }
 
 func (b *BadgerBuffer) Close() error {
-	//TODO implement me
-	panic("implement me")
+	return b.db.Close()
+}
+
+func buildKey(envelope EventEnvelope) []byte {
+	return fmt.Appendf(nil, "event:%s:%020d:%s",
+		envelope.EntityType,
+		envelope.Timestamp.UnixNano(),
+		envelope.ID,
+	)
 }
