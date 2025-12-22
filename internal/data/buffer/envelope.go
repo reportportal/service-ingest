@@ -18,16 +18,16 @@ type EventEnvelope struct {
 	RequestID string `json:"request_id,omitempty"`
 
 	//Lease management
-	LeaseID        string     `json:"lease_id,omitempty"`
-	LeaseExpiresAt *time.Time `json:"lease_expires_at,omitempty"`
+	LeaseID string `json:"lease_id,omitempty"`
+	//LeaseExpiresAt *time.Time `json:"lease_expires_at,omitempty"`
 }
 
 func (e *EventEnvelope) IsAvailable() bool {
 	if e.LeaseID == "" {
 		return true
 	}
-	if e.LeaseExpiresAt != nil && time.Now().After(*e.LeaseExpiresAt) {
-		return true
-	}
+	//if e.LeaseExpiresAt != nil && time.Now().After(*e.LeaseExpiresAt) {
+	//	return true
+	//}
 	return false
 }

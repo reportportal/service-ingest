@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
@@ -16,7 +15,7 @@ type BadgerBuffer struct {
 
 // NewBadgerBuffer creates a new BadgerBuffer
 // If path is empty, uses in-memory mode
-func NewBadgerBuffer(path string, leaseDuration time.Duration) (*BadgerBuffer, error) {
+func NewBadgerBuffer(path string) (*BadgerBuffer, error) {
 	var opts badger.Options
 
 	if path == "" {
@@ -146,7 +145,7 @@ func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) erro
 
 		for _, envelope := range events {
 			envelope.LeaseID = ""
-			envelope.LeaseExpiresAt = nil
+			//envelope.LeaseExpiresAt = nil
 
 			data, err := json.Marshal(envelope)
 			if err != nil {
