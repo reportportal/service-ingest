@@ -15,7 +15,6 @@ type StorageConfig struct {
 
 	FlushInterval string `env:"FLUSH_INTERVAL" envDefault:"30s"`
 	FlushMaxSize  string `env:"FLUSH_MAX_SIZE" envDefault:"10Mb"`
-	FlushMaxItems int    `env:"FLUSH_MAX_ITEMS" envDefault:"1000"`
 
 	ParquetCompression  string `env:"PARQUET_COMPRESSION" envDefault:"snappy"`
 	ParquetRowGroupSize int    `env:"PARQUET_ROW_GROUP_SIZE" envDefault:"1000"`
