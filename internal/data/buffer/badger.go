@@ -11,8 +11,7 @@ import (
 )
 
 type BadgerBuffer struct {
-	db            *badger.DB
-	leaseDuration time.Duration
+	db *badger.DB
 }
 
 // NewBadgerBuffer creates a new BadgerBuffer
@@ -31,13 +30,8 @@ func NewBadgerBuffer(path string, leaseDuration time.Duration) (*BadgerBuffer, e
 		return nil, fmt.Errorf("failed to open badger: %w", err)
 	}
 
-	if leaseDuration == 0 {
-		leaseDuration = 5 * time.Minute
-	}
-
 	return &BadgerBuffer{
-		db:            db,
-		leaseDuration: leaseDuration,
+		db: db,
 	}, nil
 }
 
@@ -81,9 +75,6 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
-		now := time.Now()
-		leaseExpiry := now.Add(b.leaseDuration)
-
 		for it.Rewind(); it.Valid() && len(envelopes) < limit; it.Next() {
 			item := it.Item()
 
@@ -99,7 +90,6 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 			}
 
 			envelope.LeaseID = readID
-			envelope.LeaseExpiresAt = &leaseExpiry
 
 			data, err := json.Marshal(envelope)
 			if err != nil {
