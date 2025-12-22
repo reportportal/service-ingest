@@ -8,14 +8,11 @@ import (
 type EventEnvelope struct {
 	ID         string          `json:"id"`
 	EntityUUID string          `json:"entity_uuid"`
-	EntityType string          `json:"entity_type"`
-	Operation  string          `json:"operation"`
+	EntityType EntityType      `json:"entity_type"`
+	Operation  OperationType   `json:"operation"`
 	Timestamp  time.Time       `json:"timestamp"`
 	Data       json.RawMessage `json:"data"`
 	Size       int64           `json:"size"`
-
-	//Tracing
-	RequestID string `json:"request_id,omitempty"`
 
 	//Lease management
 	LeaseID string `json:"lease_id,omitempty"`
@@ -31,3 +28,20 @@ func (e *EventEnvelope) IsAvailable() bool {
 	//}
 	return false
 }
+
+type EntityType string
+
+const (
+	EntityTypeLaunch EntityType = "launch"
+	EntityTypeItem   EntityType = "item"
+	EntityTypeLog    EntityType = "log"
+)
+
+type OperationType string
+
+const (
+	OperationTypeStart  OperationType = "start"
+	OperationTypeUpdate OperationType = "update"
+	OperationTypeFinish OperationType = "finish"
+	OperationTypeCreate OperationType = "create"
+)
