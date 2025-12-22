@@ -7,6 +7,6 @@ type Buffer interface {
 	Read(ctx context.Context, limit int) ([]EventEnvelope, error)
 	Ack(ctx context.Context, events []EventEnvelope) error
 	Release(ctx context.Context, events []EventEnvelope) error
-	Size(ctx context.Context) (bytes int64, err error)
+	Size(ctx context.Context) (items int64, err error)
 	Close() error
 }
