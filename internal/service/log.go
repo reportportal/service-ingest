@@ -3,6 +3,7 @@ package service
 import (
 	"mime/multipart"
 
+	"github.com/google/uuid"
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
@@ -15,6 +16,10 @@ func NewLogService(repo LogRepository) *LogService {
 }
 
 func (s *LogService) SaveLog(project string, log model.Log) error {
+	if log.UUID == "" {
+		log.UUID = uuid.New().String()
+	}
+
 	if err := s.logRepo.Create(project, log); err != nil {
 		return err
 	}

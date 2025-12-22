@@ -3,6 +3,7 @@ package service
 import (
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
@@ -15,10 +16,16 @@ func NewItemService(repo ItemRepository) *ItemService {
 }
 
 func (s *ItemService) StartItem(project string, item model.Item) error {
+	if item.UUID == "" {
+		item.UUID = uuid.New().String()
+	}
+
 	if err := s.itemRepo.Start(project, item); err != nil {
 		return err
 	}
+
 	slog.Debug("Started item", "project", project, "item", item)
+
 	return nil
 }
 
