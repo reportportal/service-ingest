@@ -58,7 +58,7 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 			return err
 		}
 
-		if err := updateCounter(txn, 1); err != nil {
+		if err := updateCounter(txn, counterKeyItems, 1); err != nil {
 			return fmt.Errorf("failed to update size: %w", err)
 		}
 
@@ -136,7 +136,7 @@ func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 			}
 		}
 
-		if err := updateCounter(txn, -int64(len(events))); err != nil {
+		if err := updateCounter(txn, counterKeyItems, -int64(len(events))); err != nil {
 			return fmt.Errorf("failed to update size: %w", err)
 		}
 
@@ -173,22 +173,22 @@ func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) erro
 	})
 }
 
-func (b *BadgerBuffer) Size(ctx context.Context) (items int64, err error) {
+func (b *BadgerBuffer) Size(ctx context.Context) (counter Counter, err error) {
 	err = b.db.View(func(txn *badger.Txn) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
 		}
 
-		sizeVal, err := getCounter(txn)
+		items, err := getCounter(txn, counterKeyItems)
 		if err != nil {
 			return fmt.Errorf("failed to get size: %w", err)
 		}
-		items = sizeVal
+		counter.Items = items
 
 		return nil
 	})
 
-	return items, err
+	return counter, err
 }
 
 func (b *BadgerBuffer) Close() error {
