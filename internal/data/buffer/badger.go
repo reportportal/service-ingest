@@ -176,7 +176,7 @@ func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) erro
 	})
 }
 
-func (b *BadgerBuffer) Size(ctx context.Context) (count int, bytes int64, err error) {
+func (b *BadgerBuffer) Size(ctx context.Context) (bytes int64, err error) {
 	err = b.db.View(func(txn *badger.Txn) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
@@ -191,7 +191,7 @@ func (b *BadgerBuffer) Size(ctx context.Context) (count int, bytes int64, err er
 		return nil
 	})
 
-	return count, bytes, err
+	return bytes, err
 }
 
 func (b *BadgerBuffer) Close() error {
