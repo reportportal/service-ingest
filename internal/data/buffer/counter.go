@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	counterKeySize = []byte("_meta:size")
+	counterKeyItems = []byte("_meta:items")
 )
 
 func getCounter(txn *badger.Txn) (value int64, err error) {
-	item, err := txn.Get(counterKeySize)
+	item, err := txn.Get(counterKeyItems)
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
 			return 0, nil
@@ -46,5 +46,5 @@ func updateCounter(txn *badger.Txn, delta int64) error {
 
 	data := make([]byte, 8)
 	binary.BigEndian.PutUint64(data, uint64(newValue))
-	return txn.Set(counterKeySize, data)
+	return txn.Set(counterKeyItems, data)
 }

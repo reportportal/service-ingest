@@ -58,7 +58,7 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 			return err
 		}
 
-		if err := updateCounter(txn, envelope.Size); err != nil {
+		if err := updateCounter(txn, 1); err != nil {
 			return fmt.Errorf("failed to update size: %w", err)
 		}
 
@@ -129,17 +129,14 @@ func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 			return err
 		}
 
-		var totalSize int64
-
 		for _, envelope := range events {
 			key := buildKey(envelope)
-			totalSize += envelope.Size
 			if err := txn.Delete(key); err != nil {
 				return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
 			}
 		}
 
-		if err := updateCounter(txn, -totalSize); err != nil {
+		if err := updateCounter(txn, -int64(len(events))); err != nil {
 			return fmt.Errorf("failed to update size: %w", err)
 		}
 
