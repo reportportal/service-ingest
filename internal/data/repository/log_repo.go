@@ -28,6 +28,7 @@ func (l *LogRepositoryImpl) Create(project string, log model.Log) error {
 
 	envelope := buffer.EventEnvelope{
 		ID:         uuid.New().String(),
+		Project:    project,
 		EntityUUID: log.UUID,
 		EntityType: buffer.EntityTypeLog,
 		Operation:  buffer.OperationTypeCreate,

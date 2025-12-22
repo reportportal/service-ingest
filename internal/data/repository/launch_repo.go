@@ -32,6 +32,7 @@ func (l *LaunchRepositoryImpl) Start(project string, launch model.Launch) error 
 
 	envelope := buffer.EventEnvelope{
 		ID:         uuid.New().String(),
+		Project:    project,
 		EntityUUID: launch.UUID,
 		EntityType: buffer.EntityTypeLaunch,
 		Operation:  buffer.OperationTypeStart,
@@ -55,6 +56,7 @@ func (l *LaunchRepositoryImpl) Update(project string, launch model.Launch) error
 
 	envelope := buffer.EventEnvelope{
 		ID:         uuid.New().String(),
+		Project:    project,
 		EntityUUID: launch.UUID,
 		EntityType: buffer.EntityTypeLaunch,
 		Operation:  buffer.OperationTypeUpdate,
@@ -78,6 +80,7 @@ func (l *LaunchRepositoryImpl) Finish(project string, launch model.Launch) error
 
 	envelope := buffer.EventEnvelope{
 		ID:         uuid.New().String(),
+		Project:    project,
 		EntityUUID: launch.UUID,
 		EntityType: buffer.EntityTypeLaunch,
 		Operation:  buffer.OperationTypeFinish,
