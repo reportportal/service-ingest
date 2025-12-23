@@ -11,6 +11,7 @@ type Config struct {
 	Server  ServerConfig
 	Log     LogConfig
 	Storage StorageConfig
+	Batch   BatchProcessorConfig
 }
 
 type ServerConfig struct {
@@ -23,6 +24,14 @@ type ServerConfig struct {
 type LogConfig struct {
 	Level  string `env:"LOG_LEVEL" envDefault:"info"`
 	Format string `env:"LOG_FORMAT" envDefault:"json"` // json or text
+}
+
+type StorageConfig struct {
+	CatalogPath string `env:"CATALOG_PATH" envDefault:"/data/catalog"`
+	BufferPath  string `env:"BUFFER_PATH" envDefault:"/data/buffer"`
+
+	ParquetCompression  string `env:"PARQUET_COMPRESSION" envDefault:"snappy"`
+	ParquetRowGroupSize int    `env:"PARQUET_ROW_GROUP_SIZE" envDefault:"1000"`
 }
 
 func Load() (*Config, error) {
@@ -40,6 +49,10 @@ func Load() (*Config, error) {
 
 	if err := env.Parse(&cfg.Storage); err != nil {
 		return nil, fmt.Errorf("failed to parse storage config: %w", err)
+	}
+
+	if err := env.Parse(&cfg.Batch); err != nil {
+		return nil, fmt.Errorf("failed to parse batch processor config: %w", err)
 	}
 
 	return cfg, nil
