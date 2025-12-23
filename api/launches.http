@@ -1,4 +1,4 @@
-@host = http://localhost:8089
+@host = http://localhost:8080
 @projectName = superadmin_personal
 @username =
 @password =
@@ -14,6 +14,7 @@ grant_type=password&username={{username}}&password={{password}}
 
 ### Get launches
 GET {{host}}/api/v1/{{projectName}}/launch
+Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
 ### Get old launch format
