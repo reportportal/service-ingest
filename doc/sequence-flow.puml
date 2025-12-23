@@ -1,0 +1,146 @@
+@startuml Event Processing Flow
+
+title Micro Batch Processing - Execution Flow
+
+actor Agent
+participant Handler
+participant Service
+participant Repository
+participant "BatchProcessor" as Processor <<goroutine>>
+participant Catalog
+participant "ParquetWriter" as Writer
+database Buffer <<badger>>
+database Storage <<filesystem>>
+
+== Phase 1: Synchronous Event Ingestion ==
+
+Agent -> Handler: POST /api/v1/{project}/launch/start
+activate Handler
+
+Handler -> Service: StartLaunch(project, launch)
+activate Service
+
+Service -> Service: Enrich
+note right of Service
+  UUID
+  Timestamps
+  Status
+end note
+
+Service -> Repository: Start(project, launch)
+activate Repository
+
+Repository -> Repository: Create EventEnvelope
+note right of Repository
+  Fields:
+  - ID
+  - Project
+  - EntityUUID
+  - EntityType
+  - Operation
+  - Timestamp
+  - Size
+  - Data(JSON)
+end note
+
+Repository -> Buffer: Put(envelope)
+activate Buffer
+Buffer --> Repository: Ok
+deactivate Buffer
+
+Repository --> Service: Ok
+deactivate Repository
+
+Service --> Handler: Ok
+deactivate Service
+
+Handler --> Agent: 202 Accepted
+deactivate Handler
+
+== Phase 2: Asynchronous Batch Processing ==
+
+note right of Processor
+Starts by triggers:
+- Timer: 30 seconds
+
+Optional:
+- Size: 10 MB
+- Items count: 1000 events
+end note
+
+Processor -> Buffer: Size()
+activate Processor
+activate Buffer
+Buffer --> Processor: count=500, bytes=5MB
+deactivate Buffer
+
+Processor -> Buffer: Read(limit=1000)
+activate Buffer
+Buffer -> Buffer: Lease events
+Buffer --> Processor: []EventEnvelope
+deactivate Buffer
+
+Processor -> Processor: Group
+note right of Processor
+Group by:
+- project_id
+- launch_id
+- entity_type
+- event_date
+end note
+
+Processor -> Processor: Generate batch_id:\n<timestamp>-<seq>
+
+loop For each batch group
+
+Processor -> Catalog: Get path
+activate Catalog
+Catalog --> Processor: Path
+deactivate Catalog
+
+Processor -> Writer: Write partition
+activate Writer
+Writer -> Storage: Create dirs
+Writer -> Storage: Write parquet bytes
+Writer -> Storage: Write _SUCCESS marker
+Writer -> Storage: Close writer
+Writer --> Processor: Ok
+deactivate Writer
+end
+
+Processor -> Buffer: Ack([]EventEnvelope)
+activate Buffer
+Buffer --> Processor: Ok
+deactivate Buffer
+
+Processor -> Processor: Log metrics
+deactivate Processor
+
+== Error Scenario ==
+
+Processor -> Buffer: Read(limit)
+activate Processor
+activate Buffer
+Buffer --> Processor: []EventEnvelope
+deactivate Buffer
+
+Processor -> Writer: WritePartition(...)
+activate Writer
+Writer --> Processor: error: disk full
+deactivate Writer
+
+Processor -> Buffer: Release([]EventEnvelope)
+activate Buffer
+Buffer -> Buffer: Clear lease
+Buffer --> Processor: Ok
+deactivate Buffer
+
+Processor -> Processor: Log error
+deactivate Processor
+
+note right
+Events remain in buffer
+Will retry on next cycle
+end note
+
+@enduml
