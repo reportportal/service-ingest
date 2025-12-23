@@ -23,6 +23,8 @@ type BatchProcessor struct {
 	//TODO: move to buffer for deterministic batch IDs across restarts
 	mu     sync.Mutex // guards seqMap
 	seqMap map[partitionKey]int
+
+	done chan struct{}
 }
 
 type BatchProcessorOptions struct {
@@ -43,12 +45,14 @@ func NewBatchProcessor(opts BatchProcessorOptions) *BatchProcessor {
 		readLimit:     opts.ReadLimit,
 		logger:        opts.Logger,
 		seqMap:        make(map[partitionKey]int),
+		done:          make(chan struct{}),
 	}
 }
 
 func (bp *BatchProcessor) Start(ctx context.Context) {
 	ticker := time.NewTicker(bp.flushInterval)
 	defer ticker.Stop()
+	defer close(bp.done)
 
 	bp.logger.Info("batch processor started",
 		"flush_interval", bp.flushInterval,
@@ -67,6 +71,10 @@ func (bp *BatchProcessor) Start(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (bp *BatchProcessor) Done() <-chan struct{} {
+	return bp.done
 }
 
 func (bp *BatchProcessor) processBatch(ctx context.Context) error {
