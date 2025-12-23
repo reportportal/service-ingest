@@ -1,0 +1,66 @@
+@host = http://localhost:8080
+@projectName = superadmin_personal
+@username =
+@password =
+### Get OAuth2 Token
+POST {{host}}/uat/sso/oauth/token
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic dWk6dWltYW4=
+
+grant_type = password &
+username = {{username}} &
+password = {{password}}
+
+> {%client.global.set("access_token", response.body.access_token);%}
+
+### Create log entry
+POST {{host}}/api/v2/{{projectName}}/log
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "launchUuid": "1a378825-261b-4f28-8956-5db2ed6626c2",
+  "itemUuid": "78886a02-d35c-42a0-842d-baecfbd51255",
+  "time": "2019-11-06T15:50:53.187Z",
+  "message": "Just an info message 6",
+  "level": "info"
+}
+
+### Create log entry batch with file attachment
+POST {{host}}/api/v2/{{projectName}}/log
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="json_request_part"
+Content-Type: application/json
+
+[
+  {
+    "itemUuid": "03b3d034-1bb5-43d7-b455-8060ca2c89bf",
+    "launchUuid": "64a5d4b3-3c3a-448a-8537-104406deb0dc",
+    "time": "2019-11-06T15:50:53.187Z",
+    "message": "Some critical exception",
+    "level": "error",
+    "file": {
+      "name": "reporting-api.yaml"
+    }
+  },
+  {
+    "itemUuid": "03b3d034-1bb5-43d7-b455-8060ca2c89bf",
+    "launchUuid": "64a5d4b3-3c3a-448a-8537-104406deb0dc",
+    "time": "2019-11-06T15:50:53.187Z",
+    "message": "Just an info message",
+    "level": "info"
+  }
+]
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="reporting-api.yaml"
+
+< reporting-api.yaml
+
+--WebAppBoundary--
+
+
+### Get logs
