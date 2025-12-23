@@ -15,7 +15,7 @@ type LaunchRepositoryImpl struct {
 	buffer buffer.Buffer
 }
 
-func NewLaunchRepo(buffer buffer.Buffer) *LaunchRepositoryImpl {
+func NewLaunchRepository(buffer buffer.Buffer) *LaunchRepositoryImpl {
 	return &LaunchRepositoryImpl{buffer}
 }
 
