@@ -32,7 +32,8 @@ func (i *ItemRepositoryImpl) Start(project string, item model.Item) error {
 
 	envelope := buffer.EventEnvelope{
 		ID:         uuid.New().String(),
-		Project:    project,
+		ProjectKey: project,
+		LaunchUUID: item.LaunchUUID,
 		EntityUUID: item.UUID,
 		EntityType: buffer.EntityTypeItem,
 		Operation:  buffer.OperationTypeStart,
@@ -56,7 +57,8 @@ func (i *ItemRepositoryImpl) Finish(project string, item model.Item) error {
 
 	envelope := buffer.EventEnvelope{
 		ID:         uuid.New().String(),
-		Project:    project,
+		ProjectKey: project,
+		LaunchUUID: item.LaunchUUID,
 		EntityUUID: item.UUID,
 		EntityType: buffer.EntityTypeItem,
 		Operation:  buffer.OperationTypeFinish,

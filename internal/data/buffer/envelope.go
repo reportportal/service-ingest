@@ -7,7 +7,8 @@ import (
 
 type EventEnvelope struct {
 	ID         string          `json:"id"`
-	Project    string          `json:"project"`
+	ProjectKey string          `json:"project_key"`
+	LaunchUUID string          `json:"launch_uuid"`
 	EntityUUID string          `json:"entity_uuid"`
 	EntityType EntityType      `json:"entity_type"`
 	Operation  OperationType   `json:"operation"`
