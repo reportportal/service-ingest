@@ -9,6 +9,7 @@ type StorageConfig struct {
 	BufferPath    string `env:"BUFFER_PATH" envDefault:"/data/buffer"`
 	FlushInterval string `env:"FLUSH_INTERVAL" envDefault:"30s"`
 	BatchWindow   string `env:"BATCH_WINDOW" envDefault:"60s"`
+	ReadLimit     int    `env:"READ_LIMIT" envDefault:"1000"`
 
 	ParquetCompression  string `env:"PARQUET_COMPRESSION" envDefault:"snappy"`
 	ParquetRowGroupSize int    `env:"PARQUET_ROW_GROUP_SIZE" envDefault:"1000"`
