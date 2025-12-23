@@ -11,13 +11,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/reportportal/service-ingest/internal/config"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
-	"github.com/reportportal/service-ingest/internal/data/parquet"
-	"github.com/reportportal/service-ingest/internal/data/repository"
-	"github.com/reportportal/service-ingest/internal/handler"
 	"github.com/reportportal/service-ingest/internal/processor"
-	"github.com/reportportal/service-ingest/internal/service"
 )
 
 type App struct {
@@ -26,65 +21,6 @@ type App struct {
 	buffer    buffer.Buffer
 	ctx       context.Context
 	cancel    context.CancelFunc
-}
-
-func New(cfg *config.Config) (*App, error) {
-	flushInterval, err := cfg.Batch.FlushIntervalDuration()
-	if err != nil {
-		return nil, fmt.Errorf("invalid flush interval: %w", err)
-	}
-
-	batchWindow, err := cfg.Batch.BatchWindowDuration()
-	if err != nil {
-		return nil, fmt.Errorf("invalid batch window: %w", err)
-	}
-
-	buf, err := buffer.NewBadgerBuffer(cfg.Storage.BufferPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create buffer: %w", err)
-	}
-
-	writer := parquet.NewWriter(cfg.Storage.CatalogPath, cfg.Storage.ParquetCompression)
-
-	launchRepo := repository.NewLaunchRepository(buf)
-	itemRepo := repository.NewItemRepository(buf)
-	logRepo := repository.NewLogRepository(buf)
-
-	launchService := service.NewLaunchService(launchRepo)
-	itemService := service.NewItemService(itemRepo)
-	logService := service.NewLogService(logRepo)
-
-	handlers := handler.Handlers{
-		Launch: handler.NewLaunchHandler(launchService),
-		Item:   handler.NewItemHandler(itemService),
-		Log:    handler.NewLogHandler(logService),
-	}
-
-	router := handler.NewRouter(cfg.Server.BasePath, handlers)
-
-	server := &http.Server{
-		Addr:    cfg.Server.Addr(),
-		Handler: router,
-	}
-
-	batchProcessor := processor.NewBatchProcessor(processor.BatchProcessorOptions{
-		Buffer:        buf,
-		Writer:        writer,
-		FlushInterval: flushInterval,
-		BatchWindow:   batchWindow,
-		ReadLimit:     cfg.Batch.ReadLimit,
-		Logger:        slog.Default(),
-	})
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	return &App{
-		server:    server,
-		processor: batchProcessor,
-		buffer:    buf,
-		ctx:       ctx,
-		cancel:    cancel,
-	}, nil
 }
 
 func (a *App) Run() error {
