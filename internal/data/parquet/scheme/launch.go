@@ -27,15 +27,20 @@ type LaunchEvent struct {
 
 func NewLaunchEvent(event buffer.EventEnvelope, launch model.Launch) LaunchEvent {
 	return LaunchEvent{
-		ID:        event.ID,
-		Timestamp: event.Timestamp,
-		Operation: event.Operation,
-		UUID:      launch.UUID,
-		Name:      launch.Name,
-		Status:    launch.Status,
-		Owner:     launch.Owner,
-		StartTime: launch.StartTime,
-		EndTime:   launch.EndTime,
-		Mode:      launch.Mode,
+		ID:          event.ID,
+		Timestamp:   event.Timestamp,
+		Operation:   event.Operation,
+		UUID:        launch.UUID,
+		Name:        launch.Name,
+		Description: launch.Description,
+		Status:      launch.Status,
+		Owner:       launch.Owner,
+		StartTime:   launch.StartTime,
+		EndTime:     launch.EndTime,
+		UpdatedAt:   launch.UpdatedAt,
+		Mode:        launch.Mode,
+		Attributes:  launch.Attributes,
+		IsRerun:     launch.IsRerun,
+		RerunOf:     launch.RerunOf,
 	}
 }

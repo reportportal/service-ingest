@@ -31,5 +31,6 @@ func NewLogEvent(event buffer.EventEnvelope, log model.Log) LogEvent {
 		LogTime:    log.Timestamp,
 		Level:      log.Level,
 		Message:    log.Message,
+		File:       log.File,
 	}
 }
