@@ -44,6 +44,7 @@ func (h LaunchHandler) startLaunch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	projectName := chi.URLParam(r, "projectName")
+
 	uuid, err := h.service.StartLaunch(projectName, data.toLaunchModel())
 	if err != nil {
 		render.Render(w, r, InternalServerError)
@@ -99,7 +100,6 @@ func (h LaunchHandler) updateLaunch(w http.ResponseWriter, r *http.Request) {
 	//	render.Render(w, r, InternalServerError)
 	//	return
 	//}
-
 	//render.Status(r, http.StatusOK)
 	//render.Render(w, r, &UpdateLaunchRS{Message: "Launch updated successfully"})
 }

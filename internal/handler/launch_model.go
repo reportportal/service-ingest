@@ -7,9 +7,8 @@ import (
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
-// StartLaunchRQ represents the request to start a launch
 type StartLaunchRQ struct {
-	UUID        string           `json:"uuid" validate:"required,uuid"`
+	UUID        string           `json:"uuid" validate:"omitempty,uuid"`
 	Name        string           `json:"name" validate:"required"`
 	StartTime   time.Time        `json:"startTime" validate:"required"`
 	Description string           `json:"description,omitempty"`

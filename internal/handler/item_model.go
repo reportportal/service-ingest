@@ -9,7 +9,7 @@ import (
 )
 
 type StartTestItemRQ struct {
-	UUID        string         `json:"uuid" validate:"required,uuid"`
+	UUID        string         `json:"uuid" validate:"omitempty,uuid"`
 	LaunchUUID  string         `json:"launchUuid" validate:"required,uuid"`
 	StartTime   time.Time      `json:"startTime" validate:"required,datetime"`
 	Name        string         `json:"name" validate:"required"`

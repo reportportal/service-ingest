@@ -15,18 +15,18 @@ func NewItemService(repo ItemRepository) *ItemService {
 	return &ItemService{repo}
 }
 
-func (s *ItemService) StartItem(project string, item model.Item) error {
+func (s *ItemService) StartItem(project string, item model.Item) (string, error) {
 	if item.UUID == "" {
 		item.UUID = uuid.New().String()
 	}
 
 	if err := s.itemRepo.Start(project, item); err != nil {
-		return err
+		return "", err
 	}
 
 	slog.Debug("Started item", "project", project, "item", item)
 
-	return nil
+	return item.UUID, nil
 }
 
 func (s *ItemService) FinishItem(project string, itemUUID string, item model.Item) error {

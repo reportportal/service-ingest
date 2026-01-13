@@ -43,13 +43,14 @@ func (h ItemHandler) startItem(w http.ResponseWriter, r *http.Request) {
 
 	projectName := chi.URLParam(r, "projectName")
 
-	if err := h.service.StartItem(projectName, data.toItemModel()); err != nil {
+	uuid, err := h.service.StartItem(projectName, data.toItemModel())
+	if err != nil {
 		render.Render(w, r, InternalServerError)
 		return
 	}
 
 	render.Status(r, http.StatusCreated)
-	render.Render(w, r, &StartTestItemRS{UUID: data.UUID})
+	render.Render(w, r, &StartTestItemRS{UUID: uuid})
 }
 
 func (h ItemHandler) finishTestItem(w http.ResponseWriter, r *http.Request) {

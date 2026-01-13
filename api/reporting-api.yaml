@@ -597,7 +597,6 @@ components:
       required:
         - name
         - startTime
-        - uuid
     StartLaunchRS:
       type: object
       properties:
@@ -875,7 +874,6 @@ components:
         - name
         - startTime
         - type
-        - uuid
     ItemPathName:
       type: object
       properties:
