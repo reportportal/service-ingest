@@ -4,8 +4,8 @@ BUILD_TIME ?= $(shell date -u '+%Y-%m-%d_%H:%M:%S')
 
 LDFLAGS := -ldflags "\
 	-X main.version=$(VERSION) \
-    -X main.commit=$(COMMIT) \
-    -X main.buildTime=$(BUILD_TIME)"
+  -X main.commit=$(COMMIT) \
+  -X main.buildTime=$(BUILD_TIME)"
 
 .PHONY: run build clean
 
