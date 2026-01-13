@@ -17,13 +17,13 @@ type Config struct {
 type ServerConfig struct {
 	Port     int    `env:"PORT" envDefault:"8080"`
 	Host     string `env:"HOST" envDefault:"0.0.0.0"`
-	Env      string `env:"ENVIRONMENT" envDefault:"development"`
 	BasePath string `env:"BASE_PATH" envDefault:"/api"`
 }
 
 type LogConfig struct {
-	Level  string `env:"LOG_LEVEL" envDefault:"info"`
-	Format string `env:"LOG_FORMAT" envDefault:"json"` // json or text
+	Level     string `env:"LOG_LEVEL" envDefault:"info"`
+	Format    string `env:"LOG_FORMAT" envDefault:"json"` // json or text
+	AddSource bool   `env:"LOG_ADD_SOURCE" envDefault:"false"`
 }
 
 type StorageConfig struct {

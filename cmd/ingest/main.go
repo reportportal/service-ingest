@@ -27,7 +27,7 @@ func main() {
 	l := logger.New(logger.Options{
 		Level:     cfg.Log.Level,
 		Format:    cfg.Log.Format,
-		AddSource: cfg.Server.Env == "development",
+		AddSource: cfg.Log.AddSource,
 	})
 	slog.SetDefault(l)
 
@@ -42,9 +42,9 @@ func main() {
 		slog.String("version", version),
 		slog.String("commit", commit),
 		slog.String("build_date", date),
-		slog.String("address", cfg.Server.Addr()),
-		slog.String("environment", cfg.Server.Env),
 		slog.String("base_path", cfg.Server.BasePath),
+		slog.String("log_level", cfg.Log.Level),
+		slog.String("address", cfg.Server.Addr()),
 	)
 
 	if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
