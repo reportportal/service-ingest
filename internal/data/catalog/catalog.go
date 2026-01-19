@@ -10,7 +10,7 @@ import (
 func BuildPath(projectID, launchID, entityType, eventDate, batchID string) string {
 	return filepath.Join(
 		fmt.Sprintf("project_id=%s", projectID),
-		fmt.Sprintf("launch_id=%s", launchID),
+		fmt.Sprintf("launch_uuid=%s", launchID),
 		"events",
 		fmt.Sprintf("entity=%s", entityType),
 		fmt.Sprintf("event_date=%s", eventDate),
