@@ -44,7 +44,7 @@ func main() {
 		slog.String("build_date", date),
 		slog.String("base_path", cfg.Server.BasePath),
 		slog.String("log_level", cfg.Log.Level),
-		slog.String("address", cfg.Server.Addr()),
+		slog.String("address", cfg.Server.Address),
 	)
 
 	if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {

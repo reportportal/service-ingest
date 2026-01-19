@@ -17,6 +17,7 @@ type Config struct {
 type ServerConfig struct {
 	Port     int    `env:"PORT" envDefault:"8080"`
 	Host     string `env:"HOST" envDefault:"0.0.0.0"`
+	Address  string `env:"ADDRESS,expand" envDefault:"$SCIM_HOST:$SCIM_PORT"`
 	BasePath string `env:"BASE_PATH" envDefault:"/api"`
 }
 
@@ -56,8 +57,4 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func (s ServerConfig) Addr() string {
-	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
