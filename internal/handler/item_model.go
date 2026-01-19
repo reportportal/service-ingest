@@ -50,7 +50,7 @@ func (rq *StartTestItemRQ) toItemModel() model.Item {
 		Name:        rq.Name,
 		Description: rq.Description,
 		Type:        rq.Type,
-		StartTime:   rq.StartTime,
+		StartTime:   &rq.StartTime,
 		Attributes:  rq.Attributes.toAttributesModel(),
 		Parameters:  rq.Parameters.toParametersModel(),
 		CodeRef:     rq.CodeRef,

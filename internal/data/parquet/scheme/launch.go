@@ -8,15 +8,15 @@ import (
 )
 
 type LaunchEvent struct {
-	ID          string               `parquet:"id"`
-	Timestamp   time.Time            `parquet:"timestamp"`
+	ID          string               `parquet:"event_id"`
+	Timestamp   time.Time            `parquet:"event_timestamp"`
 	Operation   buffer.OperationType `parquet:"operation"`
 	UUID        string               `parquet:"uuid"`
 	Name        string               `parquet:"name"`
 	Description string               `parquet:"description"`
 	Status      model.LaunchStatus   `parquet:"status"`
 	Owner       string               `parquet:"owner"`
-	StartTime   time.Time            `parquet:"start_time"`
+	StartTime   *time.Time           `parquet:"start_time,optional"`
 	EndTime     *time.Time           `parquet:"end_time,optional"`
 	UpdatedAt   time.Time            `parquet:"updated_at"`
 	Mode        model.LaunchMode     `parquet:"mode"`

@@ -35,7 +35,7 @@ func (rq *StartLaunchRQ) toLaunchModel() model.Launch {
 		UUID:        rq.UUID,
 		Name:        rq.Name,
 		Description: rq.Description,
-		StartTime:   rq.StartTime,
+		StartTime:   &rq.StartTime,
 		Mode:        rq.Mode,
 		Attributes:  rq.Attributes.toAttributesModel(),
 		IsRerun:     rq.IsRerun,

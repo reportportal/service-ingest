@@ -9,7 +9,7 @@ type Item struct {
 	Description string     `json:"description"`
 	Type        ItemType   `json:"type"`
 	Status      ItemStatus `json:"status"`
-	StartTime   time.Time  `json:"start_time"`
+	StartTime   *time.Time `json:"start_time"`
 	EndTime     *time.Time `json:"end_time"`
 	UpdatedAt   time.Time  `json:"updated_at"`
 	Attributes  Attributes `json:"attributes"`

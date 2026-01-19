@@ -8,7 +8,7 @@ type Launch struct {
 	Description string
 	Status      LaunchStatus
 	Owner       string
-	StartTime   time.Time
+	StartTime   *time.Time
 	EndTime     *time.Time
 	UpdatedAt   time.Time
 	Mode        LaunchMode
@@ -27,9 +27,13 @@ type Statistics struct {
 // Duration returns the duration of the launch in seconds.
 // If the launch is still in progress, it returns the duration from the start time to the current time.
 func (l *Launch) Duration() float64 {
-	if l.EndTime == nil {
-		return time.Since(l.StartTime).Seconds()
+	if l.StartTime == nil {
+		return 0
 	}
 
-	return l.EndTime.Sub(l.StartTime).Seconds()
+	if l.EndTime == nil {
+		return time.Since(*l.StartTime).Seconds()
+	}
+
+	return l.EndTime.Sub(*l.StartTime).Seconds()
 }

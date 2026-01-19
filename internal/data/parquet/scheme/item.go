@@ -17,7 +17,7 @@ type ItemEvent struct {
 	Description string               `parquet:"description"`
 	Type        model.ItemType       `parquet:"type"`
 	Status      model.ItemStatus     `parquet:"status"`
-	StartTime   time.Time            `parquet:"start_time"`
+	StartTime   *time.Time           `parquet:"start_time,optional"`
 	EndTime     *time.Time           `parquet:"end_time,optional"`
 	UpdatedAt   time.Time            `parquet:"updated_at"`
 	Attributes  model.Attributes     `parquet:"attributes"`
