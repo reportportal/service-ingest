@@ -3,9 +3,9 @@ COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME ?= $(shell date -u '+%Y-%m-%d_%H:%M:%S')
 
 LDFLAGS := -ldflags "\
-	-X main.version=$(VERSION) \
-  -X main.commit=$(COMMIT) \
-  -X main.buildTime=$(BUILD_TIME)"
+ -X main.version=$(VERSION) \
+ -X main.commit=$(COMMIT) \
+ -X main.buildTime=$(BUILD_TIME)"
 
 .PHONY: run build clean
 
@@ -15,7 +15,7 @@ run:
 	@echo "Version: $(VERSION)"
 	@echo "Commit: $(COMMIT)"
 	@echo "Build Time: $(BUILD_TIME)"
-	go run $(LDFLAGS) ./cmd/ingest/main.go
+	go run $(LDFLAGS) ./cmd/ingest
 
 # Build the binary
 build:

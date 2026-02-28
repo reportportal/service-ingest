@@ -4,7 +4,7 @@ import "time"
 
 type BatchProcessorConfig struct {
 	FlushInterval string `env:"FLUSH_INTERVAL" envDefault:"30s"`
-	BatchWindow   string `env:"BATCH_WINDOW" envDefault:"60s"`
+	BatchWindow   string `env:"BATCH_WINDOW" envDefault:"30s"`
 	ReadLimit     int    `env:"READ_LIMIT" envDefault:"1000"`
 }
 

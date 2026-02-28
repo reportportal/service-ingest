@@ -72,7 +72,7 @@ func buildHandlers(buf buffer.Buffer) handler.Handlers {
 func buildServer(cfg *config.Config, handlers handler.Handlers) *http.Server {
 	router := handler.NewRouter(cfg.Server.BasePath, handlers)
 	return &http.Server{
-		Addr:    cfg.Server.Addr(),
+		Addr:    cfg.Server.Address,
 		Handler: router,
 	}
 }
