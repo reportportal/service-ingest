@@ -41,7 +41,9 @@ func (a *App) Run() error {
 
 	select {
 	case err := <-errChan:
-		a.Shutdown()
+		if err = a.Shutdown(); err != nil {
+			return err
+		}
 		return fmt.Errorf("server error: %w", err)
 	case sig := <-signalChan:
 		slog.Info("received shutdown signal", "signal", sig)
@@ -54,8 +56,8 @@ func (a *App) Shutdown() error {
 
 	a.cancel()
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownCancel()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	if err := a.server.Shutdown(shutdownCtx); err != nil {
 		slog.Error("server shutdown error", "error", err)
