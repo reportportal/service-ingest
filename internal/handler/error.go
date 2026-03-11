@@ -41,8 +41,7 @@ func RespondNotImplemented(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseValidationError(err error) string {
-	var validationErrs validator.ValidationErrors
-	if errors.As(err, &validationErrs) {
+	if validationErrs, ok := errors.AsType[validator.ValidationErrors](err); ok {
 		for _, e := range validationErrs {
 			field := e.Field()
 			switch e.Tag() {
