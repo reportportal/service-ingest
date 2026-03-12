@@ -22,13 +22,15 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	writer := buildWriter(cfg)
-	handlers := buildHandlers(buf)
-	server := buildServer(cfg, handlers)
 
 	batchProcessor, err := buildBatchProcessor(cfg, buf, writer)
 	if err != nil {
+		_ = buf.Close()
 		return nil, err
 	}
+
+	handlers := buildHandlers(buf)
+	server := buildServer(cfg, handlers)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
