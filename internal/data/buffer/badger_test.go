@@ -6,18 +6,17 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestBuffer(t *testing.T) *BadgerBuffer {
 	t.Helper()
 	buf, err := NewBadgerBuffer("")
-	if err != nil {
-		t.Fatalf("failed to create buffer: %v", err)
-	}
+	require.NoError(t, err)
 	t.Cleanup(func() {
-		if err := buf.Close(); err != nil {
-			t.Errorf("failed to close buffer: %v", err)
-		}
+		assert.NoError(t, buf.Close())
 	})
 	return buf
 }
@@ -37,9 +36,7 @@ func newEnvelope(id string, entityType EntityType) EventEnvelope {
 
 func mustPut(t *testing.T, buf *BadgerBuffer, ctx context.Context, e EventEnvelope) {
 	t.Helper()
-	if err := buf.Put(ctx, e); err != nil {
-		t.Fatalf("Put(%s): %v", e.ID, err)
-	}
+	require.NoError(t, buf.Put(ctx, e))
 }
 
 func TestPut_IncreasesSize(t *testing.T) {
@@ -49,12 +46,8 @@ func TestPut_IncreasesSize(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("1", EntityTypeLaunch))
 
 	counter, err := buf.Size(ctx)
-	if err != nil {
-		t.Fatalf("Size: %v", err)
-	}
-	if counter.Items != 1 {
-		t.Errorf("expected 1 item, got %d", counter.Items)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), counter.Items)
 }
 
 func TestRead_ReturnsEnvelopes(t *testing.T) {
@@ -65,12 +58,8 @@ func TestRead_ReturnsEnvelopes(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("2", EntityTypeItem))
 
 	envelopes, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read: %v", err)
-	}
-	if len(envelopes) != 2 {
-		t.Errorf("expected 2 envelopes, got %d", len(envelopes))
-	}
+	require.NoError(t, err)
+	assert.Len(t, envelopes, 2)
 }
 
 func TestRead_RespectsLimit(t *testing.T) {
@@ -82,12 +71,8 @@ func TestRead_RespectsLimit(t *testing.T) {
 	}
 
 	envelopes, err := buf.Read(ctx, 3)
-	if err != nil {
-		t.Fatalf("Read: %v", err)
-	}
-	if len(envelopes) != 3 {
-		t.Errorf("expected 3 envelopes, got %d", len(envelopes))
-	}
+	require.NoError(t, err)
+	assert.Len(t, envelopes, 3)
 }
 
 func TestRead_SetsLease(t *testing.T) {
@@ -97,12 +82,8 @@ func TestRead_SetsLease(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("1", EntityTypeLaunch))
 
 	envelopes, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read: %v", err)
-	}
-	if envelopes[0].LeaseID == "" {
-		t.Error("expected LeaseID to be set after Read")
-	}
+	require.NoError(t, err)
+	assert.NotEmpty(t, envelopes[0].LeaseID)
 }
 
 func TestRead_DoesNotReturnLeasedItems(t *testing.T) {
@@ -112,20 +93,12 @@ func TestRead_DoesNotReturnLeasedItems(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("1", EntityTypeLaunch))
 
 	first, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("first Read: %v", err)
-	}
-	if len(first) != 1 {
-		t.Fatalf("expected 1 envelope, got %d", len(first))
-	}
+	require.NoError(t, err)
+	require.Len(t, first, 1)
 
 	second, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("second Read: %v", err)
-	}
-	if len(second) != 0 {
-		t.Errorf("expected 0 envelopes, got %d", len(second))
-	}
+	require.NoError(t, err)
+	assert.Empty(t, second)
 }
 
 func TestAck_DeletesItem(t *testing.T) {
@@ -135,21 +108,13 @@ func TestAck_DeletesItem(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("1", EntityTypeLaunch))
 
 	envelopes, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read: %v", err)
-	}
+	require.NoError(t, err)
 
-	if err := buf.Ack(ctx, envelopes); err != nil {
-		t.Fatalf("Ack: %v", err)
-	}
+	require.NoError(t, buf.Ack(ctx, envelopes))
 
 	counter, err := buf.Size(ctx)
-	if err != nil {
-		t.Fatalf("Size: %v", err)
-	}
-	if counter.Items != 0 {
-		t.Errorf("expected 0 items after Ack, got %d", counter.Items)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), counter.Items)
 }
 
 func TestRelease_MakesItemAvailableAgain(t *testing.T) {
@@ -159,21 +124,13 @@ func TestRelease_MakesItemAvailableAgain(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("1", EntityTypeLaunch))
 
 	envelopes, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read: %v", err)
-	}
+	require.NoError(t, err)
 
-	if err := buf.Release(ctx, envelopes); err != nil {
-		t.Fatalf("Release: %v", err)
-	}
+	require.NoError(t, buf.Release(ctx, envelopes))
 
 	envelopes2, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read after Release: %v", err)
-	}
-	if len(envelopes2) != 1 {
-		t.Errorf("expected 1 envelope after Release, got %d", len(envelopes2))
-	}
+	require.NoError(t, err)
+	assert.Len(t, envelopes2, 1)
 }
 
 func TestSize_ReflectsOnlyUnacked(t *testing.T) {
@@ -184,21 +141,13 @@ func TestSize_ReflectsOnlyUnacked(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope("2", EntityTypeLaunch))
 
 	envelopes, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read: %v", err)
-	}
+	require.NoError(t, err)
 
-	if err := buf.Ack(ctx, envelopes[:1]); err != nil {
-		t.Fatalf("Ack: %v", err)
-	}
+	require.NoError(t, buf.Ack(ctx, envelopes[:1]))
 
 	counter, err := buf.Size(ctx)
-	if err != nil {
-		t.Fatalf("Size: %v", err)
-	}
-	if counter.Items != 1 {
-		t.Errorf("expected 1 item after partial Ack, got %d", counter.Items)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), counter.Items)
 }
 
 func TestRead_EmptyBuffer(t *testing.T) {
@@ -206,19 +155,13 @@ func TestRead_EmptyBuffer(t *testing.T) {
 	ctx := context.Background()
 
 	envelopes, err := buf.Read(ctx, 10)
-	if err != nil {
-		t.Fatalf("Read on empty buffer: %v", err)
-	}
-	if len(envelopes) != 0 {
-		t.Errorf("expected 0 envelopes, got %d", len(envelopes))
-	}
+	require.NoError(t, err)
+	assert.Empty(t, envelopes)
 }
 
 func TestAck_EmptySlice(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
 
-	if err := buf.Ack(ctx, nil); err != nil {
-		t.Errorf("Ack with nil should be no-op, got: %v", err)
-	}
+	assert.NoError(t, buf.Ack(ctx, nil))
 }
