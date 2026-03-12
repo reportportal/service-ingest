@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	counterKeyItems = []byte("_meta:items")
+	bufferKeySize = []byte("_meta:size")
 )
 
 func getCounter(txn *badger.Txn, key []byte) (value int64, err error) {
