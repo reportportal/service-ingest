@@ -51,7 +51,7 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 			return err
 		}
 
-		if err := updateCounter(txn, counterKeySize, 1); err != nil {
+		if err := updateCounter(txn, bufferKeySize, 1); err != nil {
 			return fmt.Errorf("failed to update size: %w", err)
 		}
 
@@ -125,7 +125,7 @@ func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 			}
 		}
 
-		if err := updateCounter(txn, counterKeySize, -int64(len(events))); err != nil {
+		if err := updateCounter(txn, bufferKeySize, -int64(len(events))); err != nil {
 			return fmt.Errorf("failed to update size: %w", err)
 		}
 
@@ -168,7 +168,7 @@ func (b *BadgerBuffer) Size(ctx context.Context) (counter Counter, err error) {
 			return ctxErr
 		}
 
-		items, err := getCounter(txn, counterKeySize)
+		items, err := getCounter(txn, bufferKeySize)
 		if err != nil {
 			return fmt.Errorf("failed to get size: %w", err)
 		}
