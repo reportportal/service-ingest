@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/reportportal/service-ingest/internal/data/buffer"
@@ -16,13 +15,8 @@ type BatchProcessor struct {
 	buffer        buffer.Buffer
 	writer        *parquet.Writer
 	flushInterval time.Duration
-	batchWindow   time.Duration
 	readLimit     int
 	logger        *slog.Logger
-
-	//TODO: move to buffer for deterministic batch IDs across restarts
-	mu     sync.Mutex // guards seqMap
-	seqMap map[partitionKey]int
 
 	done chan struct{}
 }
@@ -31,7 +25,6 @@ type BatchProcessorOptions struct {
 	Buffer        buffer.Buffer
 	Writer        *parquet.Writer
 	FlushInterval time.Duration
-	BatchWindow   time.Duration
 	ReadLimit     int
 	Logger        *slog.Logger
 }
@@ -41,10 +34,8 @@ func NewBatchProcessor(opts BatchProcessorOptions) *BatchProcessor {
 		buffer:        opts.Buffer,
 		writer:        opts.Writer,
 		flushInterval: opts.FlushInterval,
-		batchWindow:   opts.BatchWindow,
 		readLimit:     opts.ReadLimit,
 		logger:        opts.Logger,
-		seqMap:        make(map[partitionKey]int),
 		done:          make(chan struct{}),
 	}
 }
@@ -56,7 +47,6 @@ func (bp *BatchProcessor) Start(ctx context.Context) {
 
 	bp.logger.Info("batch processor started",
 		"flush_interval", bp.flushInterval,
-		"batch_window", bp.batchWindow,
 		"read_limit", bp.readLimit,
 	)
 
@@ -106,15 +96,14 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) error {
 
 	bp.logger.Debug("read events from buffer", "count", len(events))
 
-	partitions := bp.groupByPartition(events)
+	batchID := fmt.Sprintf("%d", time.Now().UnixMilli())
+	groups := bp.group(events)
 
-	bp.logger.Info("grouped events into partitions", "partitions", len(partitions))
+	bp.logger.Debug("grouped events", "groups", len(groups))
 
-	for key, partition := range partitions {
-		batchID := bp.generateBatchID(key)
-
-		if err := bp.writePartition(key, batchID, partition); err != nil {
-			bp.logger.Error("failed to write partition", "partition", key, "error", err, "batch_id", batchID)
+	for key, group := range groups {
+		if err := bp.write(key, batchID, group); err != nil {
+			bp.logger.Error("failed to write group", "groups", key, "error", err, "batch_id", batchID)
 
 			if releaseErr := bp.buffer.Release(ctx, events); releaseErr != nil {
 				bp.logger.Error("failed to release events", "error", releaseErr)
@@ -128,23 +117,23 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) error {
 		return fmt.Errorf("failed to ack events: %w", err)
 	}
 
-	bp.logger.Debug("batch processed successfully", "events", len(events), "partitions", len(partitions))
+	bp.logger.Debug("batch processed successfully", "events", len(events), "groups", len(groups))
 
 	return nil
 }
 
-func (bp *BatchProcessor) groupByPartition(events []buffer.EventEnvelope) map[partitionKey][]buffer.EventEnvelope {
-	partitions := make(map[partitionKey][]buffer.EventEnvelope)
+func (bp *BatchProcessor) group(events []buffer.EventEnvelope) map[groupKey][]buffer.EventEnvelope {
+	groups := make(map[groupKey][]buffer.EventEnvelope)
 
 	for _, event := range events {
-		key := newPartitionKey(event, bp.batchWindow)
-		partitions[key] = append(partitions[key], event)
+		key := newGroupKey(event)
+		groups[key] = append(groups[key], event)
 	}
 
-	return partitions
+	return groups
 }
 
-func (bp *BatchProcessor) writePartition(key partitionKey, batchID string, events []buffer.EventEnvelope) error {
+func (bp *BatchProcessor) write(key groupKey, batchID string, events []buffer.EventEnvelope) error {
 	path := catalog.BuildPath(
 		key.ProjectKey,
 		key.LaunchUUID,
@@ -153,29 +142,11 @@ func (bp *BatchProcessor) writePartition(key partitionKey, batchID string, event
 		batchID,
 	)
 
-	bp.logger.Debug("writing partition", "path", path, "events", len(events))
+	bp.logger.Debug("writing group", "path", path, "events", len(events))
 
-	if err := bp.writer.WritePartition(key.EntityType, path, events); err != nil {
+	if err := bp.writer.Write(key.EntityType, path, events); err != nil {
 		return fmt.Errorf("failed to write partition: %w", err)
 	}
 
 	return nil
-}
-
-func (bp *BatchProcessor) generateBatchID(key partitionKey) string {
-	bp.mu.Lock()
-	defer bp.mu.Unlock()
-
-	seq := bp.seqMap[key] + 1
-	bp.seqMap[key] = seq
-
-	cutoff := time.Now().Add(-2 * time.Hour).Unix()
-
-	for k := range bp.seqMap {
-		if k.WindowStart < cutoff {
-			delete(bp.seqMap, k)
-		}
-	}
-
-	return fmt.Sprintf("%d-%03d", key.WindowStart, seq)
 }

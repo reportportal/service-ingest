@@ -25,7 +25,7 @@ func NewWriter(basePath string, compression string) *Writer {
 	}
 }
 
-func (w *Writer) WritePartition(entityType buffer.EntityType, path string, events []buffer.EventEnvelope) error {
+func (w *Writer) Write(entityType buffer.EntityType, path string, events []buffer.EventEnvelope) error {
 	if len(events) == 0 {
 		return nil
 	}

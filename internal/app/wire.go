@@ -85,16 +85,10 @@ func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, writer *parquet.
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
 	}
 
-	batchWindow, err := cfg.Batch.BatchWindowDuration()
-	if err != nil {
-		return nil, fmt.Errorf("invalid batch window: %w", err)
-	}
-
 	return processor.NewBatchProcessor(processor.BatchProcessorOptions{
 		Buffer:        buf,
 		Writer:        writer,
 		FlushInterval: flushInterval,
-		BatchWindow:   batchWindow,
 		ReadLimit:     cfg.Batch.ReadLimit,
 		Logger:        slog.Default(),
 	}), nil
