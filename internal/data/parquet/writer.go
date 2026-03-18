@@ -14,15 +14,19 @@ import (
 )
 
 type Writer struct {
-	basePath    string
+	BasePath    string
 	compression string
 }
 
 func NewWriter(basePath string, compression string) *Writer {
 	return &Writer{
-		basePath:    basePath,
+		BasePath:    basePath,
 		compression: compression,
 	}
+}
+
+func (w *Writer) GetBasePath() string {
+	return w.BasePath
 }
 
 func (w *Writer) Write(entityType buffer.EntityType, path string, events []buffer.EventEnvelope) error {
@@ -30,7 +34,7 @@ func (w *Writer) Write(entityType buffer.EntityType, path string, events []buffe
 		return nil
 	}
 
-	fullPath := filepath.Join(w.basePath, path)
+	fullPath := filepath.Join(w.BasePath, path)
 
 	if err := os.MkdirAll(fullPath, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", fullPath, err)
