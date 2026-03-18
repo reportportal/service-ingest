@@ -24,7 +24,7 @@ type mockBuffer struct {
 	releaseFunc func(ctx context.Context, events []buffer.EventEnvelope) error
 }
 
-func (m *mockBuffer) Put(ctx context.Context, envelope buffer.EventEnvelope) error {
+func (m *mockBuffer) Put(_ context.Context, _ buffer.EventEnvelope) error {
 	return nil
 }
 
