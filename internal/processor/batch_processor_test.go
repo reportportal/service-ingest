@@ -212,7 +212,13 @@ func TestProcessBatch_WritesParquetFiles(t *testing.T) {
 	for _, event := range events {
 		path := filepath.Join(
 			bp.writer.BasePath,
-			catalog.BuildPath(event.ProjectKey, event.LaunchUUID, string(event.EntityType), event.Timestamp.Format("2006-01-02"), "*"),
+			catalog.BuildPath(
+				event.ProjectKey,
+				event.LaunchUUID,
+				string(event.EntityType),
+				event.Timestamp.Format("2006-01-02"),
+				"*",
+			),
 		)
 		parquetPattern := path + "/*.parquet"
 		t.Logf("parquet pattern: %s", parquetPattern)
