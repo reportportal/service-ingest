@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"log/slog"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v3"
 )
 
 // validate is a singleton validator instance used for struct validation across handlers.
@@ -19,7 +22,7 @@ func NewRouter(basePath string, handlers Handlers) chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
+	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{Level: slog.LevelInfo}))
 	r.Use(middleware.Recoverer)
 
 	r.Route(basePath, func(r chi.Router) {
