@@ -8,25 +8,25 @@ import (
 )
 
 type ItemEvent struct {
-	ID          string               `parquet:"id"`
-	Timestamp   time.Time            `parquet:"timestamp"`
-	Operation   buffer.OperationType `parquet:"operation"`
-	UUID        string               `parquet:"uuid"`
-	LaunchUUID  string               `parquet:"launch_uuid"`
-	Name        string               `parquet:"name"`
-	Description string               `parquet:"description"`
-	Type        model.ItemType       `parquet:"type"`
-	Status      model.ItemStatus     `parquet:"status"`
-	StartTime   *time.Time           `parquet:"start_time,optional"`
-	EndTime     *time.Time           `parquet:"end_time,optional"`
-	UpdatedAt   time.Time            `parquet:"updated_at"`
-	Attributes  model.Attributes     `parquet:"attributes"`
-	Parameters  model.Parameters     `parquet:"parameters"`
-	CodeRef     string               `parquet:"code_ref"`
-	TestCaseId  string               `parquet:"test_case_id"`
-	ParentUUID  string               `parquet:"parent_uuid"`
+	ID          string               `parquet:"event_id,delta"`
+	Timestamp   time.Time            `parquet:"event_timestamp,timestamp"`
+	Operation   buffer.OperationType `parquet:"operation,enum"`
+	UUID        string               `parquet:"uuid,delta"`
+	LaunchUUID  string               `parquet:"launch_uuid,delta"`
+	Name        string               `parquet:"name,dict"`
+	Description string               `parquet:"description,string"`
+	Type        model.ItemType       `parquet:"type,enum"`
+	Status      model.ItemStatus     `parquet:"status,enum"`
+	StartTime   *time.Time           `parquet:"start_time,optional,timestamp"`
+	EndTime     *time.Time           `parquet:"end_time,optional,timestamp"`
+	UpdatedAt   time.Time            `parquet:"updated_at,timestamp"`
+	Attributes  model.Attributes     `parquet:"attributes,list"`
+	Parameters  model.Parameters     `parquet:"parameters,list"`
+	CodeRef     string               `parquet:"code_ref,dict"`
+	TestCaseId  string               `parquet:"test_case_id,delta"`
+	ParentUUID  string               `parquet:"parent_uuid,delta"`
 	IsRetry     bool                 `parquet:"is_retry"`
-	RetryOf     string               `parquet:"retry_of"`
+	RetryOf     string               `parquet:"retry_of,optional,delta"`
 	Issue       model.Issue          `parquet:"issue"`
 }
 

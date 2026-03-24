@@ -8,21 +8,21 @@ import (
 )
 
 type LaunchEvent struct {
-	ID          string               `parquet:"event_id"`
-	Timestamp   time.Time            `parquet:"event_timestamp"`
-	Operation   buffer.OperationType `parquet:"operation"`
-	UUID        string               `parquet:"uuid"`
-	Name        string               `parquet:"name"`
-	Description string               `parquet:"description"`
-	Status      model.LaunchStatus   `parquet:"status"`
-	Owner       string               `parquet:"owner"`
-	StartTime   *time.Time           `parquet:"start_time,optional"`
-	EndTime     *time.Time           `parquet:"end_time,optional"`
-	UpdatedAt   time.Time            `parquet:"updated_at"`
-	Mode        model.LaunchMode     `parquet:"mode"`
-	Attributes  []model.Attribute    `parquet:"attributes"`
+	ID          string               `parquet:"event_id,delta"`
+	Timestamp   time.Time            `parquet:"event_timestamp,timestamp"`
+	Operation   buffer.OperationType `parquet:"operation,enum"`
+	UUID        string               `parquet:"uuid,delta"`
+	Name        string               `parquet:"name,optional,dict"`
+	Description string               `parquet:"description,optional,string"`
+	Status      model.LaunchStatus   `parquet:"status,enum"`
+	Owner       string               `parquet:"owner,dict"`
+	StartTime   *time.Time           `parquet:"start_time,optional,timestamp"`
+	EndTime     *time.Time           `parquet:"end_time,optional,timestamp"`
+	UpdatedAt   time.Time            `parquet:"updated_at,timestamp"`
+	Mode        model.LaunchMode     `parquet:"mode,optional,enum"`
+	Attributes  []model.Attribute    `parquet:"attributes,list"`
 	IsRerun     bool                 `parquet:"is_rerun"`
-	RerunOf     string               `parquet:"rerun_of"`
+	RerunOf     string               `parquet:"rerun_of,optional,delta"`
 }
 
 func NewLaunchEvent(event buffer.EventEnvelope, launch model.Launch) LaunchEvent {

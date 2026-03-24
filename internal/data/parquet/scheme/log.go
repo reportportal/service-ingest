@@ -8,15 +8,15 @@ import (
 )
 
 type LogEvent struct {
-	ID         string               `parquet:"id"`
-	Timestamp  time.Time            `parquet:"timestamp"`
-	Operation  buffer.OperationType `parquet:"operation"`
-	UUID       string               `parquet:"uuid"`
-	ItemUUID   string               `parquet:"item_uuid"`
-	LaunchUUID string               `parquet:"launch_uuid"`
-	LogTime    time.Time            `parquet:"log_time"`
-	Level      model.LogLevel       `parquet:"level"`
-	Message    string               `parquet:"message"`
+	ID         string               `parquet:"event_id,delta"`
+	Timestamp  time.Time            `parquet:"event_timestamp,timestamp"`
+	Operation  buffer.OperationType `parquet:"operation,enum"`
+	UUID       string               `parquet:"uuid,delta"`
+	ItemUUID   string               `parquet:"item_uuid,delta"`
+	LaunchUUID string               `parquet:"launch_uuid,delta"`
+	LogTime    time.Time            `parquet:"log_time,timestamp"`
+	Level      model.LogLevel       `parquet:"level,enum"`
+	Message    string               `parquet:"message,string"`
 	File       model.LogFile        `parquet:"file"`
 }
 
