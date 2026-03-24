@@ -11,7 +11,7 @@ import (
 type StartTestItemRQ struct {
 	UUID        string         `json:"uuid" validate:"omitempty,uuid"`
 	LaunchUUID  string         `json:"launchUuid" validate:"required,uuid"`
-	StartTime   time.Time      `json:"startTime" validate:"required,datetime"`
+	StartTime   time.Time      `json:"startTime" validate:"required"`
 	Name        string         `json:"name" validate:"required"`
 	Description string         `json:"description,omitempty"`
 	CodeRef     string         `json:"codeRef,omitempty"`
@@ -71,7 +71,7 @@ func (rs *StartTestItemRS) Render(_ http.ResponseWriter, _ *http.Request) error 
 
 type FinishTestItemRQ struct {
 	LaunchUUID  string           `json:"launchUuid" validate:"required,uuid"`
-	EndTime     time.Time        `json:"endTime" validate:"required,datetime"`
+	EndTime     time.Time        `json:"endTime" validate:"required"`
 	Status      model.ItemStatus `json:"status,omitempty" validate:"omitempty,oneof=PASSED FAILED STOPPED SKIPPED INTERRUPTED CANCELLED INFO WARN"`
 	Attributes  Attributes       `json:"attributes,omitempty" validate:"max=256,dive,unique"`
 	Description string           `json:"description,omitempty"`
