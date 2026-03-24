@@ -67,7 +67,7 @@ func (bp *BatchProcessor) Done() <-chan struct{} {
 	return bp.done
 }
 
-func (bp *BatchProcessor) processBatch(ctx context.Context) error {
+func (bp *BatchProcessor) processBatch(ctx context.Context) (err error) {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -88,6 +88,15 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to read from buffer: %w", err)
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if releaseErr := bp.buffer.Release(ctx, events); releaseErr != nil {
+				bp.logger.Error("failed to release events after panic", "error", releaseErr)
+			}
+			err = fmt.Errorf("panic in process events: %v", r)
+		}
+	}()
 
 	if len(events) == 0 {
 		bp.logger.Debug("no events to process")
