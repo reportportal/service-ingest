@@ -23,6 +23,7 @@ type ServerConfig struct {
 
 type LogConfig struct {
 	Level     string `env:"LOG_LEVEL" envDefault:"info"`
+	HTTPLevel string `env:"LOG_HTTP_LEVEL" envDefault:"warn"`
 	Format    string `env:"LOG_FORMAT" envDefault:"json"` // json or text
 	AddSource bool   `env:"LOG_ADD_SOURCE" envDefault:"false"`
 }

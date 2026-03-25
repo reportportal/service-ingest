@@ -44,6 +44,7 @@ func main() {
 		slog.String("build_date", date),
 		slog.String("base_path", cfg.Server.BasePath),
 		slog.String("log_level", cfg.Log.Level),
+		slog.String("log_htpp_level", cfg.Log.HTTPLevel),
 		slog.String("address", cfg.Server.Address),
 	)
 

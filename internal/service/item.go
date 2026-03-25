@@ -24,17 +24,16 @@ func (s *ItemService) StartItem(project string, item model.Item) (string, error)
 		return "", err
 	}
 
-	slog.Debug("Started item", "project", project, "item", item)
-
 	return item.UUID, nil
 }
 
 func (s *ItemService) FinishItem(project string, itemUUID string, item model.Item) error {
 	item.UUID = itemUUID
+
 	if err := s.itemRepo.Finish(project, item); err != nil {
 		return err
 	}
-	slog.Debug("Finished item", "project", project, "item", item)
+
 	return nil
 }
 

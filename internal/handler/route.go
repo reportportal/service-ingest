@@ -16,13 +16,13 @@ type Handlers struct {
 	Log    *LogHandler
 }
 
-func NewRouter(basePath string, handlers Handlers) chi.Router {
+func NewRouter(basePath string, handlers Handlers, level slog.Level) chi.Router {
 	initValidatorOnce()
 
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{Level: slog.LevelInfo}))
+	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{Level: level}))
 	r.Use(middleware.Recoverer)
 
 	r.Route(basePath, func(r chi.Router) {

@@ -21,7 +21,7 @@ func New(opts Options) *slog.Logger {
 	}
 
 	options := &slog.HandlerOptions{
-		Level:     parseLevel(opts.Level),
+		Level:     ParseLevel(opts.Level),
 		AddSource: opts.AddSource,
 	}
 
@@ -30,10 +30,9 @@ func New(opts Options) *slog.Logger {
 	return slog.New(handler)
 }
 
-func parseLevel(levelStr string) slog.Level {
-	var level slog.Level
-	byteLevel := []byte(strings.ToLower(strings.TrimSpace(levelStr)))
-	if err := level.UnmarshalText(byteLevel); err != nil {
+func ParseLevel(levelStr string) (level slog.Level) {
+	if err := level.UnmarshalText([]byte(strings.TrimSpace(levelStr))); err != nil {
+		slog.Error("can't parse log level, using default INFO level", "value", levelStr, "err", err)
 		level = slog.LevelInfo
 	}
 	return level

@@ -13,6 +13,7 @@ import (
 	"github.com/reportportal/service-ingest/internal/handler"
 	"github.com/reportportal/service-ingest/internal/processor"
 	"github.com/reportportal/service-ingest/internal/service"
+	"github.com/reportportal/service-ingest/pkg/logger"
 )
 
 func New(cfg *config.Config) (*App, error) {
@@ -72,7 +73,8 @@ func buildHandlers(buf buffer.Buffer) handler.Handlers {
 }
 
 func buildServer(cfg *config.Config, handlers handler.Handlers) *http.Server {
-	router := handler.NewRouter(cfg.Server.BasePath, handlers)
+	level := logger.ParseLevel(cfg.Log.HTTPLevel)
+	router := handler.NewRouter(cfg.Server.BasePath, handlers, level)
 	return &http.Server{
 		Addr:    cfg.Server.Address,
 		Handler: router,
