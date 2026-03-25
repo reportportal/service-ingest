@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -20,6 +21,12 @@ type ErrResponse struct {
 
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	render.Status(r, e.HTTPStatusCode)
+	if e.Err != nil {
+		slog.WarnContext(r.Context(), "request error",
+			"status", e.HTTPStatusCode,
+			"error", e.Err.Error(),
+		)
+	}
 	return nil
 }
 
