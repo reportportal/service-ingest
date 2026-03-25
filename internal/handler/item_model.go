@@ -56,6 +56,7 @@ func (rq *StartTestItemRQ) toItemModel() model.Item {
 		CodeRef:     rq.CodeRef,
 		TestCaseId:  rq.TestCaseId,
 		ParentUUID:  rq.parentUUID,
+		HasStats:    rq.HasStats,
 		IsRetry:     rq.IsRetry,
 		RetryOf:     rq.RetryOf,
 	}

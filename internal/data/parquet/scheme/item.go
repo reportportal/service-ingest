@@ -25,6 +25,7 @@ type ItemEvent struct {
 	CodeRef     string               `parquet:"code_ref,dict"`
 	TestCaseId  string               `parquet:"test_case_id,delta"`
 	ParentUUID  string               `parquet:"parent_uuid,delta"`
+	HasStats    bool                 `parquet:"has_stats"`
 	IsRetry     bool                 `parquet:"is_retry"`
 	RetryOf     string               `parquet:"retry_of,optional,delta"`
 	Issue       model.Issue          `parquet:"issue"`
@@ -49,6 +50,7 @@ func NewItemEvent(event buffer.EventEnvelope, item model.Item) ItemEvent {
 		CodeRef:     item.CodeRef,
 		TestCaseId:  item.TestCaseId,
 		ParentUUID:  item.ParentUUID,
+		HasStats:    item.HasStats,
 		IsRetry:     item.IsRetry,
 		RetryOf:     item.RetryOf,
 		Issue:       item.Issue,

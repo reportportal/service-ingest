@@ -17,6 +17,7 @@ type Item struct {
 	CodeRef     string     `json:"code_ref"`
 	TestCaseId  string     `json:"test_case_id"`
 	ParentUUID  string     `json:"parent_uuid"`
+	HasStats    bool       `json:"has_stats"`
 	IsRetry     bool       `json:"retry"`
 	RetryOf     string     `json:"retry_of"`
 	Issue       Issue      `json:"issue"`
