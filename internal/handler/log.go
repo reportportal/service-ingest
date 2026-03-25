@@ -74,7 +74,7 @@ func (h LogHandler) saveLog(w http.ResponseWriter, r *http.Request) {
 
 	log := data.toLogModel()
 	projectName := chi.URLParam(r, "projectName")
-	if err := h.logService.SaveLog(projectName, log); err != nil {
+	if err := h.logService.SaveLog(projectName, &log); err != nil {
 		render.Render(w, r, InternalServerError)
 		return
 	}
