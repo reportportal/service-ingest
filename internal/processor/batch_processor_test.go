@@ -18,7 +18,7 @@ import (
 )
 
 type mockBuffer struct {
-	sizeFunc    func(ctx context.Context) (buffer.Counter, error)
+	sizeFunc    func(ctx context.Context) (int, error)
 	readFunc    func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error)
 	ackFunc     func(ctx context.Context, events []buffer.EventEnvelope) error
 	releaseFunc func(ctx context.Context, events []buffer.EventEnvelope) error
@@ -28,7 +28,7 @@ func (m *mockBuffer) Put(_ context.Context, _ buffer.EventEnvelope) error {
 	return nil
 }
 
-func (m *mockBuffer) Size(ctx context.Context) (buffer.Counter, error) {
+func (m *mockBuffer) Size(ctx context.Context) (int, error) {
 	return m.sizeFunc(ctx)
 }
 
@@ -86,8 +86,8 @@ func TestProcessBatch_CancelledContext(t *testing.T) {
 
 func TestProcessBatch_SizeError(t *testing.T) {
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{}, errors.New("buffer unavailable")
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return 0, errors.New("buffer unavailable")
 		},
 	}
 	bp := newProcessor(t, buf)
@@ -98,8 +98,8 @@ func TestProcessBatch_SizeError(t *testing.T) {
 
 func TestProcessBatch_EmptyBuffer(t *testing.T) {
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{Items: 0}, nil
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return 0, nil
 		},
 	}
 	bp := newProcessor(t, buf)
@@ -110,8 +110,8 @@ func TestProcessBatch_EmptyBuffer(t *testing.T) {
 
 func TestProcessBatch_ReadError(t *testing.T) {
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{Items: 5}, nil
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return 5, nil
 		},
 		readFunc: func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error) {
 			return nil, errors.New("read failed")
@@ -125,8 +125,8 @@ func TestProcessBatch_ReadError(t *testing.T) {
 
 func TestProcessBatch_ReadReturnsEmpty(t *testing.T) {
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{Items: 5}, nil
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return 5, nil
 		},
 		readFunc: func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error) {
 			return []buffer.EventEnvelope{}, nil
@@ -146,8 +146,8 @@ func TestProcessBatch_Ack(t *testing.T) {
 
 	var ackedEvents []buffer.EventEnvelope
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{Items: int64(len(events))}, nil
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return len(events), nil
 		},
 		readFunc: func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error) {
 			return events, nil
@@ -170,8 +170,8 @@ func TestProcessBatch_AckError(t *testing.T) {
 	}
 
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{Items: 1}, nil
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return 1, nil
 		},
 		readFunc: func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error) {
 			return events, nil
@@ -194,8 +194,8 @@ func TestProcessBatch_WritesParquetFiles(t *testing.T) {
 	}
 
 	buf := &mockBuffer{
-		sizeFunc: func(ctx context.Context) (buffer.Counter, error) {
-			return buffer.Counter{Items: int64(len(events))}, nil
+		sizeFunc: func(ctx context.Context) (int, error) {
+			return len(events), nil
 		},
 		readFunc: func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error) {
 			return events, nil
