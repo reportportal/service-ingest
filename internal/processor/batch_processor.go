@@ -77,12 +77,12 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to get buffer size: %w", err)
 	}
 
-	if counter.Items == 0 {
+	if counter == 0 {
 		bp.logger.Debug("buffer is empty, skipping batch")
 		return nil
 	}
 
-	bp.logger.Debug("processing batch", "count", counter.Items)
+	bp.logger.Debug("processing batch", "count", counter)
 
 	events, err := bp.buffer.Read(ctx, bp.readLimit)
 	if err != nil {
