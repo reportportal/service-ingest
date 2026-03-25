@@ -15,12 +15,12 @@ func NewLogService(repo LogRepository) *LogService {
 	return &LogService{repo}
 }
 
-func (s *LogService) SaveLog(project string, log model.Log) error {
+func (s *LogService) SaveLog(project string, log *model.Log) error {
 	if log.UUID == "" {
 		log.UUID = uuid.New().String()
 	}
 
-	if err := s.logRepo.Create(project, log); err != nil {
+	if err := s.logRepo.Create(project, *log); err != nil {
 		return err
 	}
 
@@ -28,6 +28,11 @@ func (s *LogService) SaveLog(project string, log model.Log) error {
 }
 
 func (s *LogService) SaveLogs(project string, logs []model.Log, files []*multipart.FileHeader) error {
+	for i := range logs {
+		if logs[i].UUID == "" {
+			logs[i].UUID = uuid.New().String()
+		}
+	}
 	if err := s.logRepo.CreateLogs(project, logs, files); err != nil {
 		return err
 	}
