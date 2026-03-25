@@ -114,16 +114,16 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) (err error) {
 		if err := bp.write(key, batchID, group); err != nil {
 			bp.logger.Error("failed to write group", "groups", key, "error", err, "batch_id", batchID)
 
-			if releaseErr := bp.buffer.Release(ctx, events); releaseErr != nil {
+			if releaseErr := bp.buffer.Release(ctx, group); releaseErr != nil {
 				bp.logger.Error("failed to release events", "error", releaseErr)
 			}
 
 			return fmt.Errorf("failed to write partition %v: %w", key, err)
 		}
-	}
 
-	if err := bp.buffer.Ack(ctx, events); err != nil {
-		return fmt.Errorf("failed to ack events: %w", err)
+		if err := bp.buffer.Ack(ctx, group); err != nil {
+			return fmt.Errorf("failed to ack events: %w", err)
+		}
 	}
 
 	bp.logger.Debug("batch processed successfully", "events", len(events), "groups", len(groups))
