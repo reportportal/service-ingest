@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ func NewBadgerBuffer(path string) (*BadgerBuffer, error) {
 }
 
 func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
-	key := buildKey(envelope)
+	envelope.BufferKey = buildKey(envelope)
 
 	data, err := json.Marshal(envelope)
 	if err != nil {
@@ -47,12 +48,8 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 			return err
 		}
 
-		if err := txn.Set(key, data); err != nil {
+		if err := txn.Set(envelope.BufferKey, data); err != nil {
 			return err
-		}
-
-		if err := updateCounter(txn, bufferKeySize, 1); err != nil {
-			return fmt.Errorf("failed to update size: %w", err)
 		}
 
 		return nil
@@ -119,14 +116,17 @@ func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 		}
 
 		for _, envelope := range events {
-			key := buildKey(envelope)
+			key := envelope.BufferKey
+			if _, err := txn.Get(key); err != nil {
+				slog.Error("ack key not found, skipping delete",
+					"envelope_id", envelope.ID,
+					"key", string(key),
+				)
+				continue
+			}
 			if err := txn.Delete(key); err != nil {
 				return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
 			}
-		}
-
-		if err := updateCounter(txn, bufferKeySize, -int64(len(events))); err != nil {
-			return fmt.Errorf("failed to update size: %w", err)
 		}
 
 		return nil
@@ -152,7 +152,8 @@ func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) erro
 				return fmt.Errorf("failed to marshal envelope: %w", err)
 			}
 
-			key := buildKey(envelope)
+			key := envelope.BufferKey
+
 			if err := txn.Set(key, data); err != nil {
 				return fmt.Errorf("failed to release envelope %s: %w", envelope.ID, err)
 			}
@@ -162,18 +163,20 @@ func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) erro
 	})
 }
 
-func (b *BadgerBuffer) Size(ctx context.Context) (counter Counter, err error) {
+func (b *BadgerBuffer) Size(ctx context.Context) (counter int, err error) {
 	err = b.db.View(func(txn *badger.Txn) error {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
 		}
 
-		items, err := getCounter(txn, bufferKeySize)
-		if err != nil {
-			return fmt.Errorf("failed to get size: %w", err)
+		opts := badger.DefaultIteratorOptions
+		opts.Prefix = []byte("event:")
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			counter = counter + 1
 		}
-		counter.Items = items
-
 		return nil
 	})
 
