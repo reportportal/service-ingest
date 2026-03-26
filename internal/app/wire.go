@@ -74,7 +74,7 @@ func buildHandlers(buf buffer.Buffer) handler.Handlers {
 
 func buildServer(cfg *config.Config, handlers handler.Handlers) *http.Server {
 	level := logger.ParseLevel(cfg.Log.HTTPLevel)
-	router := handler.NewRouter(cfg.Server.BasePath, handlers, level)
+	router := handler.NewRouter(cfg.Server.BasePath, handlers, level, cfg.Log.AddRSBody)
 	return &http.Server{
 		Addr:    cfg.Server.Address,
 		Handler: router,

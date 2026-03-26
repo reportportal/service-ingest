@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log/slog"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,13 +17,16 @@ type Handlers struct {
 	Log    *LogHandler
 }
 
-func NewRouter(basePath string, handlers Handlers, level slog.Level) chi.Router {
+func NewRouter(basePath string, handlers Handlers, level slog.Level, addRSBody bool) chi.Router {
 	initValidatorOnce()
 
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
-	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{Level: level}))
+	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{
+		Level:           level,
+		LogResponseBody: func(*http.Request) bool { return addRSBody }},
+	))
 	r.Use(middleware.Recoverer)
 
 	r.Route(basePath, func(r chi.Router) {
