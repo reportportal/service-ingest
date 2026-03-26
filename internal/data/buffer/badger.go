@@ -3,11 +3,17 @@ package buffer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log/slog"
+	"time"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
+)
+
+const (
+	eventPrefix = "event:"
+	leasePrefix = "_lease:"
 )
 
 type BadgerBuffer struct {
@@ -67,7 +73,7 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchSize = limit
-		opts.Prefix = []byte("event:")
+		opts.Prefix = []byte(eventPrefix)
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
@@ -81,19 +87,16 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 				continue
 			}
 
-			if !envelope.IsAvailable() {
+			leaseKey := getLeaseKey(envelope)
+			if _, err := txn.Get(leaseKey); err == nil {
 				continue
+			} else if !errors.Is(err, badger.ErrKeyNotFound) {
+				return err
 			}
 
-			envelope.LeaseID = readID
-
-			data, err := json.Marshal(envelope)
-			if err != nil {
-				return fmt.Errorf("failed to marshal envelope: %w", err)
-			}
-
-			if err := txn.Set(item.Key(), data); err != nil {
-				return fmt.Errorf("failed to set lease: %w", err)
+			entry := badger.NewEntry(leaseKey, []byte(readID)).WithTTL(30 * time.Second)
+			if err := txn.SetEntry(entry); err != nil {
+				return fmt.Errorf("failed set lease for envelop %v: %w", envelope.ID, err)
 			}
 
 			envelopes = append(envelopes, envelope)
@@ -117,16 +120,11 @@ func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 
 		for _, envelope := range events {
 			key := envelope.BufferKey
-			if _, err := txn.Get(key); err != nil {
-				slog.Error("ack key not found, skipping delete",
-					"envelope_id", envelope.ID,
-					"key", string(key),
-				)
-				continue
-			}
 			if err := txn.Delete(key); err != nil {
 				return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
 			}
+
+			_ = txn.Delete(getLeaseKey(envelope))
 		}
 
 		return nil
@@ -144,18 +142,8 @@ func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) erro
 		}
 
 		for _, envelope := range events {
-			envelope.LeaseID = ""
-			//envelope.LeaseExpiresAt = nil
-
-			data, err := json.Marshal(envelope)
-			if err != nil {
-				return fmt.Errorf("failed to marshal envelope: %w", err)
-			}
-
-			key := envelope.BufferKey
-
-			if err := txn.Set(key, data); err != nil {
-				return fmt.Errorf("failed to release envelope %s: %w", envelope.ID, err)
+			if err := txn.Delete(getLeaseKey(envelope)); err != nil {
+				return fmt.Errorf("failed to release envelop %s: %w", envelope.ID, err)
 			}
 		}
 
@@ -170,12 +158,12 @@ func (b *BadgerBuffer) Size(ctx context.Context) (counter int, err error) {
 		}
 
 		opts := badger.DefaultIteratorOptions
-		opts.Prefix = []byte("event:")
+		opts.Prefix = []byte(eventPrefix)
 		opts.PrefetchValues = false
 		it := txn.NewIterator(opts)
 		defer it.Close()
 		for it.Rewind(); it.Valid(); it.Next() {
-			counter = counter + 1
+			counter++
 		}
 		return nil
 	})
@@ -188,9 +176,13 @@ func (b *BadgerBuffer) Close() error {
 }
 
 func buildKey(envelope EventEnvelope) []byte {
-	return fmt.Appendf(nil, "event:%s:%020d:%s",
+	return fmt.Appendf(nil, eventPrefix+"%s:%020d:%s",
 		envelope.EntityType,
 		envelope.Timestamp.UnixNano(),
 		envelope.ID,
 	)
+}
+
+func getLeaseKey(envelope EventEnvelope) []byte {
+	return append([]byte(leasePrefix), envelope.BufferKey...)
 }
