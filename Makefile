@@ -28,3 +28,6 @@ build:
 # Clean build artifacts
 clean:
 	rm -rf bin/
+
+buffer-info:
+	badger --dir ./data/buffer info --show-keys
