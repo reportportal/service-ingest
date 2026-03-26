@@ -89,15 +89,6 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to read from buffer: %w", err)
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			if releaseErr := bp.buffer.Release(ctx, events); releaseErr != nil {
-				bp.logger.Error("failed to release events after panic", "error", releaseErr)
-			}
-			err = fmt.Errorf("panic in process events: %v", r)
-		}
-	}()
-
 	if len(events) == 0 {
 		bp.logger.Debug("no events to process")
 		return nil
