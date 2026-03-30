@@ -22,6 +22,8 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	fileBuf := buildFileBuffer(cfg)
+
 	writer := buildWriter(cfg)
 
 	batchProcessor, err := buildBatchProcessor(cfg, buf, writer)
@@ -30,7 +32,7 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	handlers := buildHandlers(buf)
+	handlers := buildHandlers(buf, fileBuf)
 	server := buildServer(cfg, handlers)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -52,14 +54,18 @@ func buildBuffer(cfg *config.Config) (buffer.Buffer, error) {
 	return buf, nil
 }
 
+func buildFileBuffer(cfg *config.Config) buffer.FileBuffer {
+	return buffer.NewFileBuffer(cfg.Storage.FileBufferPath)
+}
+
 func buildWriter(cfg *config.Config) *parquet.Writer {
 	return parquet.NewWriter(cfg.Storage.CatalogPath, cfg.Storage.ParquetCompression)
 }
 
-func buildHandlers(buf buffer.Buffer) handler.Handlers {
+func buildHandlers(buf buffer.Buffer, staging buffer.FileBuffer) handler.Handlers {
 	launchRepo := repository.NewLaunchRepository(buf)
 	itemRepo := repository.NewItemRepository(buf)
-	logRepo := repository.NewLogRepository(buf)
+	logRepo := repository.NewLogRepository(buf, staging)
 
 	launchService := service.NewLaunchService(launchRepo)
 	itemService := service.NewItemService(itemRepo)

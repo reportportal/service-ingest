@@ -14,4 +14,5 @@ type Log struct {
 
 type LogFile struct {
 	Name string
+	Hash string
 }

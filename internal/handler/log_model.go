@@ -67,7 +67,7 @@ func (rq *SaveLogRQ) toLogModel() model.Log {
 		Timestamp:  rq.Timestamp,
 		Level:      rq.Level,
 		Message:    rq.Message,
-		File:       model.LogFile(rq.File),
+		File:       model.LogFile{Name: rq.File.Name},
 	}
 }
 

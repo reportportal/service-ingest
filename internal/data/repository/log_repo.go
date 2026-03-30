@@ -13,11 +13,12 @@ import (
 )
 
 type LogRepositoryImpl struct {
-	buffer buffer.Buffer
+	buffer  buffer.Buffer
+	staging buffer.FileBuffer
 }
 
-func NewLogRepository(buffer buffer.Buffer) *LogRepositoryImpl {
-	return &LogRepositoryImpl{buffer}
+func NewLogRepository(buffer buffer.Buffer, staging buffer.FileBuffer) *LogRepositoryImpl {
+	return &LogRepositoryImpl{buffer, staging}
 }
 
 func (l *LogRepositoryImpl) Create(project string, log model.Log) error {
@@ -45,10 +46,22 @@ func (l *LogRepositoryImpl) Create(project string, log model.Log) error {
 	return nil
 }
 
-func (l *LogRepositoryImpl) CreateLogs(project string, logs []model.Log, _ []*multipart.FileHeader) error {
-	// TODO: handle file uploads (store in object storage, add reference to log)
+func (l *LogRepositoryImpl) CreateLogs(project string, logs []model.Log, files []*multipart.FileHeader) error {
+	dic := make(map[string]string)
+
+	for _, f := range files {
+		hash, err := l.staging.Save(f)
+		if err != nil {
+			return fmt.Errorf("failed to save file %s: %w", f.Filename, err)
+		}
+
+		dic[f.Filename] = hash
+	}
 
 	for _, log := range logs {
+		if hash, ok := dic[log.File.Name]; ok {
+			log.File.Hash = hash
+		}
 		if err := l.Create(project, log); err != nil {
 			return fmt.Errorf("failed to create log %s: %w", log.UUID, err)
 		}
