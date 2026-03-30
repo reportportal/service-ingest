@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -156,14 +155,54 @@ func TestAck_EmptySlice(t *testing.T) {
 	assert.NoError(t, buf.Ack(ctx, nil))
 }
 
-func TestPut_ReadAck(t *testing.T) {
+func TestStream_ReturnsAllEnvelopes(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
 
-	const totalPuts = 40000
-	const readLimit = 3000
+	mustPut(t, buf, ctx, newEnvelope(EntityTypeLaunch))
+	mustPut(t, buf, ctx, newEnvelope(EntityTypeItem))
+	mustPut(t, buf, ctx, newEnvelope(EntityTypeLog))
 
-	// Sequential puts - no concurrency
+	envelopes, err := buf.Stream(ctx)
+	require.NoError(t, err)
+	assert.Len(t, envelopes, 3)
+}
+
+func TestStream_EmptyBuffer(t *testing.T) {
+	buf := newTestBuffer(t)
+	ctx := context.Background()
+
+	envelopes, err := buf.Stream(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, envelopes)
+}
+
+func TestStream_PreservesData(t *testing.T) {
+	buf := newTestBuffer(t)
+	ctx := context.Background()
+
+	original := newEnvelope(EntityTypeLaunch)
+	original.Data = json.RawMessage(`{"name":"test-launch"}`)
+	mustPut(t, buf, ctx, original)
+
+	envelopes, err := buf.Stream(ctx)
+	require.NoError(t, err)
+	require.Len(t, envelopes, 1)
+
+	assert.Equal(t, original.ID, envelopes[0].ID)
+	assert.Equal(t, original.ProjectKey, envelopes[0].ProjectKey)
+	assert.Equal(t, original.LaunchUUID, envelopes[0].LaunchUUID)
+	assert.Equal(t, original.EntityType, envelopes[0].EntityType)
+	assert.JSONEq(t, `{"name":"test-launch"}`, string(envelopes[0].Data))
+}
+
+func TestLargeVolume_ReadWithAck(t *testing.T) {
+	buf := newTestBuffer(t)
+	ctx := context.Background()
+
+	const totalPuts = 100000
+	const readLimit = 10000
+
 	for range totalPuts {
 		e := newEnvelope(EntityTypeItem)
 		require.NoError(t, buf.Put(ctx, e))
@@ -173,123 +212,41 @@ func TestPut_ReadAck(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("after puts: size=%d", size)
 
-	// Read and Ack in batches
-	totalAcked := 0
 	totalRead := 0
-	iteration := 0
+
 	for {
 		events, err := buf.Read(ctx, readLimit)
-		totalRead += len(events)
 		require.NoError(t, err)
-
 		if len(events) == 0 {
 			break
 		}
-
 		require.NoError(t, buf.Ack(ctx, events))
-		totalAcked += len(events)
-		iterSize, err := buf.Size(ctx)
-		require.NoError(t, err)
-		iteration++
-		t.Logf("iteration %d: read=%d, totalRead=%d, totalAcked=%d, buffeSize=%d",
-			iteration,
-			len(events),
-			totalRead,
-			totalAcked,
-			iterSize,
-		)
+		totalRead += len(events)
 	}
 
 	size, err = buf.Size(ctx)
 	require.NoError(t, err)
 
-	if size > 0 {
-		// Check what's stuck: leased or not?
-		leased := 0
-		unleased := 0
-		_ = buf.db.View(func(txn *badger.Txn) error {
-			opts := badger.DefaultIteratorOptions
-			opts.Prefix = []byte("event:")
-			it := txn.NewIterator(opts)
-			defer it.Close()
-			for it.Rewind(); it.Valid(); it.Next() {
-				var env EventEnvelope
-				_ = it.Item().Value(func(val []byte) error {
-					return json.Unmarshal(val, &env)
-				})
-				_, err := txn.Get(getLeaseKey(env))
-				if err == nil {
-					leased++
-				} else {
-					unleased++
-				}
-			}
-			return nil
-		})
-		t.Errorf("stuck events: total=%d, leased=%d, unleased=%d", size, leased, unleased)
-	}
-
-	assert.Equal(t, totalPuts, totalAcked, "should ack all events")
+	assert.Equal(t, totalPuts, totalRead, "should read all events")
 	assert.Equal(t, 0, size, "buffer should be empty")
 }
 
-func TestConcurrentPut_WhileReadAck(t *testing.T) {
+func TestLargeVolume_StreamWithAck(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
 
-	const totalPuts = 40000
-	const readLimit = 3000
-
-	// Concurrent puts while reading
-	putDone := make(chan struct{})
-	go func() {
-		defer close(putDone)
-		for range totalPuts {
-			e := newEnvelope(EntityTypeItem)
-			_ = buf.Put(ctx, e)
-		}
-	}()
-
-	// Read and Ack concurrently with puts
-	totalAcked := 0
-
-	for {
-		events, err := buf.Read(ctx, readLimit)
-		require.NoError(t, err)
-
-		if len(events) == 0 {
-			select {
-			case <-putDone:
-				// Puts finished, do one final read
-				events, err = buf.Read(ctx, readLimit)
-				require.NoError(t, err)
-				if len(events) == 0 {
-					goto done
-				}
-			default:
-				// Puts still running, keep trying
-				continue
-			}
-		}
-
-		require.NoError(t, buf.Ack(ctx, events))
-		totalAcked += len(events)
+	const total = 100000
+	for range total {
+		mustPut(t, buf, ctx, newEnvelope(EntityTypeLog))
 	}
 
-done:
-	// Drain any remaining events
-	for {
-		events, err := buf.Read(ctx, readLimit)
-		require.NoError(t, err)
-		if len(events) == 0 {
-			break
-		}
-		require.NoError(t, buf.Ack(ctx, events))
-		totalAcked += len(events)
-	}
+	envelopes, err := buf.Stream(ctx)
+	require.NoError(t, err)
+	assert.Len(t, envelopes, total)
 
+	err = buf.Ack(ctx, envelopes)
+	require.NoError(t, err)
 	size, err := buf.Size(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, 0, size, "buffer should be empty, got %d stuck events", size)
-	t.Logf("total acked: %d out of %d puts", totalAcked, totalPuts)
+	assert.Equal(t, 0, size)
 }

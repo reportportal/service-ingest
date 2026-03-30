@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
+	"github.com/dgraph-io/ristretto/v2/z"
 	"github.com/google/uuid"
 )
 
@@ -62,6 +63,7 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 	})
 }
 
+// Read
 // TODO: Consider option to read by EventEnvelope.EntityType
 func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEnvelope, err error) {
 	readID := uuid.New().String()
@@ -108,27 +110,56 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 	return envelopes, err
 }
 
+// Stream
+// TODO: Consider to use a channel as a return value instead slice. Relevant for 100k+ events.
+func (b *BadgerBuffer) Stream(ctx context.Context) (envelops []EventEnvelope, err error) {
+	stream := b.db.NewStream()
+	stream.Prefix = []byte(eventPrefix)
+
+	stream.Send = func(buf *z.Buffer) error {
+		list, err := badger.BufferToKVList(buf)
+		if err != nil {
+			return err
+		}
+		for _, kv := range list.Kv {
+			var envelop EventEnvelope
+			if err := json.Unmarshal(kv.Value, &envelop); err != nil {
+				continue
+			}
+			envelops = append(envelops, envelop)
+		}
+		return nil
+	}
+
+	if err := stream.Orchestrate(ctx); err != nil {
+		return nil, err
+	}
+
+	return envelops, nil
+}
+
 func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 	if len(events) == 0 {
 		return nil
 	}
 
-	return b.db.Update(func(txn *badger.Txn) error {
+	wb := b.db.NewWriteBatch()
+	defer wb.Cancel()
+
+	for _, envelope := range events {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-
-		for _, envelope := range events {
-			key := envelope.BufferKey
-			if err := txn.Delete(key); err != nil {
-				return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
-			}
-
-			_ = txn.Delete(getLeaseKey(envelope))
+		if err := wb.Delete(envelope.BufferKey); err != nil {
+			return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
 		}
+		// TODO: Remove if use only streams for reading
+		if err := wb.Delete(getLeaseKey(envelope)); err != nil {
+			return fmt.Errorf("failed to delete lease %s: %w", envelope.ID, err)
+		}
+	}
 
-		return nil
-	})
+	return wb.Flush()
 }
 
 func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) error {
