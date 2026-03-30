@@ -30,8 +30,9 @@ type LogConfig struct {
 }
 
 type StorageConfig struct {
-	CatalogPath string `env:"CATALOG_PATH" envDefault:"/data/catalog"`
-	BufferPath  string `env:"BUFFER_PATH" envDefault:""`
+	CatalogPath    string `env:"CATALOG_PATH" envDefault:"/data/catalog"`
+	BufferPath     string `env:"BUFFER_PATH" envDefault:""`
+	FileBufferPath string `env:"FILE_BUFFER_PATH" envDefault:""`
 
 	ParquetCompression  string `env:"PARQUET_COMPRESSION" envDefault:"snappy"`
 	ParquetRowGroupSize int    `env:"PARQUET_ROW_GROUP_SIZE" envDefault:"1000"`
