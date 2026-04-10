@@ -32,7 +32,12 @@ func (fb *FileBuffer) Save(path string, file *multipart.FileHeader) (string, err
 		return "", fmt.Errorf("create buffer directory: %w", err)
 	}
 
-	tmp, err := os.CreateTemp("", "upload-*")
+	tmpDir := filepath.Join(fb.Dir, "tmp")
+	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+		return "", fmt.Errorf("create temp buffer directory: %w", err)
+	}
+
+	tmp, err := os.CreateTemp(tmpDir, "upload-*")
 	if err != nil {
 		return "", fmt.Errorf("create temp file: %w", err)
 	}
@@ -59,6 +64,11 @@ func (fb *FileBuffer) List() (files []string, err error) {
 		if err != nil {
 			return err
 		}
+
+		if d.IsDir() && d.Name() == "tmp" {
+			return filepath.SkipDir
+		}
+
 		if d.IsDir() {
 			return nil
 		}
