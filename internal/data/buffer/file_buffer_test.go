@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,39 +69,33 @@ func TestFileBuffer_Save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
 			fb := NewFileBuffer(dir)
+			path := filepath.Join("test-project", uuid.New().String())
 
 			fh := createMultipartFileHeader(t, tt.content)
-			hash, err := fb.Save(fh)
+			hash, err := fb.Save(path, fh)
 			require.NoError(t, err)
 
 			assert.Equal(t, expectedHash(tt.content), hash)
 
-			got, err := os.ReadFile(filepath.Join(dir, hash))
+			got, err := os.ReadFile(filepath.Join(dir, path, hash))
 			require.NoError(t, err)
 			assert.Equal(t, tt.content, got)
 		})
 	}
 }
 
-func TestFileBuffer_Save_InvalidPath(t *testing.T) {
-	fb := NewFileBuffer("/nonexistent/path")
-	fh := createMultipartFileHeader(t, []byte("data"))
-
-	_, err := fb.Save(fh)
-	assert.Error(t, err)
-}
-
 func TestFileBuffer_Save_DuplicateContent(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
+	path := filepath.Join("test-project", uuid.New().String())
 	content := []byte("duplicate")
 
 	fh1 := createMultipartFileHeader(t, content)
-	hash1, err := fb.Save(fh1)
+	hash1, err := fb.Save(path, fh1)
 	require.NoError(t, err)
 
 	fh2 := createMultipartFileHeader(t, content)
-	hash2, err := fb.Save(fh2)
+	hash2, err := fb.Save(path, fh2)
 	require.NoError(t, err)
 
 	assert.Equal(t, hash1, hash2)
@@ -109,13 +104,14 @@ func TestFileBuffer_Save_DuplicateContent(t *testing.T) {
 func TestFileBuffer_Read(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
+	path := filepath.Join("test-project", uuid.New().String())
 	content := []byte("read me")
 
 	fh := createMultipartFileHeader(t, content)
-	hash, err := fb.Save(fh)
+	hash, err := fb.Save(path, fh)
 	require.NoError(t, err)
 
-	rc, err := fb.Read(hash)
+	rc, err := fb.Read(path, hash)
 	require.NoError(t, err)
 	defer rc.Close()
 
@@ -128,20 +124,21 @@ func TestFileBuffer_Read_NotFound(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
 
-	_, err := fb.Read("nonexistent")
+	_, err := fb.Read("", "nonexistent")
 	assert.Error(t, err)
 }
 
 func TestFileBuffer_Delete(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
+	path := filepath.Join("test-project", uuid.New().String())
 	content := []byte("delete me")
 
 	fh := createMultipartFileHeader(t, content)
-	hash, err := fb.Save(fh)
+	hash, err := fb.Save(path, fh)
 	require.NoError(t, err)
 
-	require.NoError(t, fb.Delete(hash))
+	require.NoError(t, fb.Delete(path, hash))
 
 	_, err = os.Stat(filepath.Join(dir, hash))
 	assert.True(t, os.IsNotExist(err))
@@ -151,19 +148,59 @@ func TestFileBuffer_Delete_NotFound(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
 
-	assert.NoError(t, fb.Delete("nonexistent"))
+	assert.NoError(t, fb.Delete("", "nonexistent"))
+}
+
+func TestFileBuffer_List(t *testing.T) {
+	t.Run("empty buffer", func(t *testing.T) {
+		dir := t.TempDir()
+		fb := NewFileBuffer(dir)
+
+		files, err := fb.List()
+		require.NoError(t, err)
+		assert.Empty(t, files)
+	})
+
+	t.Run("lists files across projects and launches", func(t *testing.T) {
+		dir := t.TempDir()
+		fb := NewFileBuffer(dir)
+
+		fh1 := createMultipartFileHeader(t, []byte("file1"))
+		hash1, err := fb.Save(filepath.Join("project-a", "launch-1"), fh1)
+		require.NoError(t, err)
+
+		fh2 := createMultipartFileHeader(t, []byte("file2"))
+		hash2, err := fb.Save(filepath.Join("project-a", "launch-2"), fh2)
+		require.NoError(t, err)
+
+		fh3 := createMultipartFileHeader(t, []byte("file3"))
+		hash3, err := fb.Save(filepath.Join("project-b", "launch-3"), fh3)
+		require.NoError(t, err)
+
+		files, err := fb.List()
+		require.NoError(t, err)
+		assert.Len(t, files, 3)
+
+		expected := []string{
+			filepath.Join("project-a", "launch-1", hash1),
+			filepath.Join("project-a", "launch-2", hash2),
+			filepath.Join("project-b", "launch-3", hash3),
+		}
+		assert.ElementsMatch(t, expected, files)
+	})
 }
 
 func TestFileBuffer_SaveReadDelete_Roundtrip(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
+	path := filepath.Join("test-project", uuid.New().String())
 	content := []byte("full roundtrip")
 
 	fh := createMultipartFileHeader(t, content)
-	hash, err := fb.Save(fh)
+	hash, err := fb.Save(path, fh)
 	require.NoError(t, err)
 
-	rc, err := fb.Read(hash)
+	rc, err := fb.Read(path, hash)
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
 	require.NoError(t, err)
@@ -171,8 +208,8 @@ func TestFileBuffer_SaveReadDelete_Roundtrip(t *testing.T) {
 
 	assert.Equal(t, content, got)
 
-	require.NoError(t, fb.Delete(hash))
+	require.NoError(t, fb.Delete(path, hash))
 
-	_, err = fb.Read(hash)
+	_, err = fb.Read(path, hash)
 	assert.Error(t, err)
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,21 +48,21 @@ func (l *LogRepositoryImpl) Create(project string, log model.Log) error {
 }
 
 func (l *LogRepositoryImpl) CreateLogs(project string, logs []model.Log, files []*multipart.FileHeader) error {
-	dic := make(map[string]string)
+	dic := make(map[string]*multipart.FileHeader)
 
 	for _, f := range files {
-		hash, err := l.staging.Save(f)
-		if err != nil {
-			return fmt.Errorf("failed to save file %s: %w", f.Filename, err)
-		}
-
-		dic[f.Filename] = hash
+		dic[f.Filename] = f
 	}
 
 	for _, log := range logs {
-		if hash, ok := dic[log.File.Name]; ok {
+		if f, ok := dic[log.File.Name]; ok {
+			hash, err := l.staging.Save(filepath.Join(project, log.LaunchUUID), f)
+			if err != nil {
+				return fmt.Errorf("failed to save file %s: %w", f.Filename, err)
+			}
 			log.File.Hash = hash
 		}
+
 		if err := l.Create(project, log); err != nil {
 			return fmt.Errorf("failed to create log %s: %w", log.UUID, err)
 		}
