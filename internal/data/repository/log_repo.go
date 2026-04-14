@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
-	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
+	"github.com/reportportal/service-ingest/internal/data/catalog"
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
@@ -56,7 +56,7 @@ func (l *LogRepositoryImpl) CreateLogs(project string, logs []model.Log, files [
 
 	for _, log := range logs {
 		if f, ok := dic[log.File.Name]; ok {
-			hash, err := l.staging.Save(filepath.Join(project, log.LaunchUUID), f)
+			hash, err := l.staging.Save(catalog.BuildFilePath(project, log.LaunchUUID), f)
 			if err != nil {
 				return fmt.Errorf("failed to save file %s: %w", f.Filename, err)
 			}
