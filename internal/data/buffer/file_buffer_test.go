@@ -108,10 +108,10 @@ func TestFileBuffer_Read(t *testing.T) {
 	content := []byte("read me")
 
 	fh := createMultipartFileHeader(t, content)
-	hash, err := fb.Save(path, fh)
+	file, err := fb.Save(path, fh)
 	require.NoError(t, err)
 
-	rc, err := fb.Read(path, hash)
+	rc, err := fb.Read(filepath.Join(path, file))
 	require.NoError(t, err)
 	defer rc.Close()
 
@@ -124,7 +124,7 @@ func TestFileBuffer_Read_NotFound(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
 
-	_, err := fb.Read("", "nonexistent")
+	_, err := fb.Read("nonexistent")
 	assert.Error(t, err)
 }
 
@@ -135,12 +135,12 @@ func TestFileBuffer_Delete(t *testing.T) {
 	content := []byte("delete me")
 
 	fh := createMultipartFileHeader(t, content)
-	hash, err := fb.Save(path, fh)
+	file, err := fb.Save(path, fh)
 	require.NoError(t, err)
 
-	require.NoError(t, fb.Delete(path, hash))
+	require.NoError(t, fb.Delete(filepath.Join(path, file)))
 
-	_, err = os.Stat(filepath.Join(dir, hash))
+	_, err = os.Stat(file)
 	assert.True(t, os.IsNotExist(err))
 }
 
@@ -148,7 +148,7 @@ func TestFileBuffer_Delete_NotFound(t *testing.T) {
 	dir := t.TempDir()
 	fb := NewFileBuffer(dir)
 
-	assert.NoError(t, fb.Delete("", "nonexistent"))
+	assert.NoError(t, fb.Delete("nonexistent"))
 }
 
 func TestFileBuffer_List(t *testing.T) {
@@ -197,10 +197,10 @@ func TestFileBuffer_SaveReadDelete_Roundtrip(t *testing.T) {
 	content := []byte("full roundtrip")
 
 	fh := createMultipartFileHeader(t, content)
-	hash, err := fb.Save(path, fh)
+	file, err := fb.Save(path, fh)
 	require.NoError(t, err)
 
-	rc, err := fb.Read(path, hash)
+	rc, err := fb.Read(filepath.Join(path, file))
 	require.NoError(t, err)
 	got, err := io.ReadAll(rc)
 	require.NoError(t, err)
@@ -208,8 +208,8 @@ func TestFileBuffer_SaveReadDelete_Roundtrip(t *testing.T) {
 
 	assert.Equal(t, content, got)
 
-	require.NoError(t, fb.Delete(path, hash))
+	require.NoError(t, fb.Delete(file))
 
-	_, err = fb.Read(path, hash)
+	_, err = fb.Read(file)
 	assert.Error(t, err)
 }

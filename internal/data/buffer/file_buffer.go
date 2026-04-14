@@ -49,9 +49,8 @@ func (fb *FileBuffer) Save(path string, file *multipart.FileHeader) (string, err
 	}
 
 	hash := fmt.Sprintf("%x", hasher.Sum(nil))
-	dest := filepath.Join(fullPath, hash)
 
-	if err := os.Rename(tmp.Name(), dest); err != nil {
+	if err := os.Rename(tmp.Name(), filepath.Join(fullPath, hash)); err != nil {
 		_ = os.Remove(tmp.Name())
 		return "", fmt.Errorf("rename to %s: %w", hash, err)
 	}
@@ -59,6 +58,7 @@ func (fb *FileBuffer) Save(path string, file *multipart.FileHeader) (string, err
 	return hash, nil
 }
 
+// List returns list of relative file paths.
 func (fb *FileBuffer) List() (files []string, err error) {
 	err = filepath.WalkDir(fb.Dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -85,16 +85,18 @@ func (fb *FileBuffer) List() (files []string, err error) {
 	return files, err
 }
 
-func (fb *FileBuffer) Read(path string, hash string) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(fb.Dir, path, hash))
+// Read takes a relative path to file to read it.
+func (fb *FileBuffer) Read(path string) (io.ReadCloser, error) {
+	return os.Open(filepath.Join(fb.Dir, path))
 }
 
-func (fb *FileBuffer) Delete(path string, hash string) error {
-	if err := os.Remove(filepath.Join(fb.Dir, path, hash)); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("delete file %s: %w", hash, err)
+// Delete take relative path to file to delete it and catalog if it's empty.
+func (fb *FileBuffer) Delete(path string) error {
+	if err := os.Remove(filepath.Join(fb.Dir, path)); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("delete file %s: %w", path, err)
 	}
 
-	dir := filepath.Join(fb.Dir, path)
+	dir := filepath.Dir(filepath.Join(fb.Dir, path))
 	for dir != fb.Dir {
 		if err := os.Remove(dir); err != nil {
 			break
