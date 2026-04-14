@@ -16,15 +16,19 @@ import (
 )
 
 type App struct {
-	server    *http.Server
-	processor *processor.BatchProcessor
-	buffer    buffer.Buffer
-	ctx       context.Context
-	cancel    context.CancelFunc
+	server        *http.Server
+	processor     *processor.BatchProcessor
+	buffer        buffer.Buffer
+	ctx           context.Context
+	cancel        context.CancelFunc
+	fileProcessor *processor.FileProcessor
 }
 
 func (a *App) Run() error {
 	go a.processor.Start(a.ctx)
+	if a.fileProcessor != nil {
+		go a.fileProcessor.Start(a.ctx)
+	}
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
@@ -65,8 +69,16 @@ func (a *App) Shutdown() error {
 
 	select {
 	case <-a.processor.Done():
-	case <-time.After(10 * time.Second):
+	case <-shutdownCtx.Done():
 		slog.Warn("batch processor shutdown timeout")
+	}
+
+	if a.fileProcessor != nil {
+		select {
+		case <-a.fileProcessor.Done():
+		case <-shutdownCtx.Done():
+			slog.Warn("file processor shutdown timeout")
+		}
 	}
 
 	if err := a.buffer.Close(); err != nil {

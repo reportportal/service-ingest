@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 
 	"github.com/reportportal/service-ingest/internal/config"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
@@ -32,17 +33,24 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	fileProcessor, err := buildFileProcessor(cfg, fileBuf)
+	if err != nil {
+		_ = buf.Close()
+		return nil, err
+	}
+
 	handlers := buildHandlers(buf, fileBuf)
 	server := buildServer(cfg, handlers)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &App{
-		server:    server,
-		processor: batchProcessor,
-		buffer:    buf,
-		ctx:       ctx,
-		cancel:    cancel,
+		server:        server,
+		processor:     batchProcessor,
+		fileProcessor: fileProcessor,
+		buffer:        buf,
+		ctx:           ctx,
+		cancel:        cancel,
 	}, nil
 }
 
@@ -100,4 +108,18 @@ func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, writer *parquet.
 		ReadLimit:     cfg.Batch.ReadLimit,
 		Logger:        slog.Default(),
 	}), nil
+}
+
+func buildFileProcessor(cfg *config.Config, buffer buffer.FileBuffer) (*processor.FileProcessor, error) {
+	if filepath.Clean(cfg.Storage.FileBufferPath) == filepath.Clean(cfg.Storage.CatalogPath) {
+		slog.Info("file processor disabled: buffer equals catalog path")
+		return nil, nil
+	}
+
+	interval, err := cfg.Batch.FilesFlushIntervalDuration()
+	if err != nil {
+		return nil, fmt.Errorf("invalid flush interval: %w", err)
+	}
+
+	return processor.NewFileProcessor(buffer, cfg.Storage.CatalogPath, interval), nil
 }
