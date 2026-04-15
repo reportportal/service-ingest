@@ -76,10 +76,18 @@ type LogFile struct {
 }
 
 type SaveLogRS struct {
-	Responses []LogResponse `json:"responses"`
+	ID string `json:"id"`
 }
 
 func (rs *SaveLogRS) Render(_ http.ResponseWriter, _ *http.Request) error {
+	return nil
+}
+
+type SaveLogBatchRS struct {
+	Responses []LogResponse `json:"responses"`
+}
+
+func (rs *SaveLogBatchRS) Render(_ http.ResponseWriter, _ *http.Request) error {
 	return nil
 }
 

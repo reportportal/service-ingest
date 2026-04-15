@@ -62,7 +62,7 @@ func (h LogHandler) saveBatch(w http.ResponseWriter, r *http.Request) {
 		rs[i] = LogResponse{ID: log.UUID}
 	}
 	render.Status(r, http.StatusOK)
-	render.Render(w, r, &SaveLogRS{Responses: rs})
+	render.Render(w, r, &SaveLogBatchRS{Responses: rs})
 }
 
 func (h LogHandler) saveLog(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +79,6 @@ func (h LogHandler) saveLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rs := []LogResponse{{ID: log.UUID}}
 	render.Status(r, http.StatusOK)
-	render.Render(w, r, &SaveLogRS{Responses: rs})
+	render.Render(w, r, &SaveLogRS{ID: log.UUID})
 }
