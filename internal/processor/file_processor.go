@@ -67,7 +67,7 @@ func (fp *FileProcessor) Flush(ctx context.Context) (err error) {
 	}
 
 	if len(files) == 0 {
-		fp.logger.Debug("buffer is empty, skipping batch")
+		fp.logger.Debug("file buffer is empty, skipping batch")
 		return nil
 	}
 
