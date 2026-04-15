@@ -62,6 +62,9 @@ func (fb *FileBuffer) Save(path string, file *multipart.FileHeader) (string, err
 func (fb *FileBuffer) List() (files []string, err error) {
 	err = filepath.WalkDir(fb.Dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
+			if path == fb.Dir && os.IsNotExist(err) {
+				return filepath.SkipAll
+			}
 			return err
 		}
 
