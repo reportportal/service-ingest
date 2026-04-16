@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Server  ServerConfig
-	Log     LogConfig
-	Storage StorageConfig
-	Batch   BatchProcessorConfig
+	Server    ServerConfig
+	Log       LogConfig
+	Storage   StorageConfig
+	Processor ProcessorConfig
+	Buffer    BufferConfig
 }
 
 type ServerConfig struct {
@@ -30,10 +31,7 @@ type LogConfig struct {
 }
 
 type StorageConfig struct {
-	CatalogPath    string `env:"CATALOG_PATH" envDefault:"/data/catalog"`
-	BufferPath     string `env:"BUFFER_PATH" envDefault:""`
-	FileBufferPath string `env:"FILE_BUFFER_PATH" envDefault:""`
-
+	CatalogPath         string `env:"CATALOG_PATH" envDefault:"/data/catalog"`
 	ParquetCompression  string `env:"PARQUET_COMPRESSION" envDefault:"snappy"`
 	ParquetRowGroupSize int    `env:"PARQUET_ROW_GROUP_SIZE" envDefault:"1000"`
 }
@@ -55,8 +53,12 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to parse storage config: %w", err)
 	}
 
-	if err := env.Parse(&cfg.Batch); err != nil {
+	if err := env.Parse(&cfg.Processor); err != nil {
 		return nil, fmt.Errorf("failed to parse batch processor config: %w", err)
+	}
+
+	if err := env.Parse(&cfg.Buffer); err != nil {
+		return nil, fmt.Errorf("failed to parse buffer config: %w", err)
 	}
 
 	return cfg, nil

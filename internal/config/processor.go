@@ -2,16 +2,16 @@ package config
 
 import "time"
 
-type BatchProcessorConfig struct {
+type ProcessorConfig struct {
 	FlushInterval      string `env:"FLUSH_INTERVAL" envDefault:"30s"`
 	FilesFlushInterval string `env:"FILES_FLUSH_INTERVAL" envDefault:"10s"`
 	ReadLimit          int    `env:"READ_LIMIT" envDefault:"1000"`
 }
 
-func (s BatchProcessorConfig) FlushIntervalDuration() (time.Duration, error) {
+func (s ProcessorConfig) FlushIntervalDuration() (time.Duration, error) {
 	return time.ParseDuration(s.FlushInterval)
 }
 
-func (s BatchProcessorConfig) FilesFlushIntervalDuration() (time.Duration, error) {
+func (s ProcessorConfig) FilesFlushIntervalDuration() (time.Duration, error) {
 	return time.ParseDuration(s.FilesFlushInterval)
 }

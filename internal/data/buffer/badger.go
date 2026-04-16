@@ -23,15 +23,7 @@ type BadgerBuffer struct {
 
 // NewBadgerBuffer creates a new BadgerBuffer
 // If path is empty, uses in-memory mode
-func NewBadgerBuffer(path string) (*BadgerBuffer, error) {
-	var opts badger.Options
-
-	if path == "" {
-		opts = badger.DefaultOptions("").WithInMemory(true)
-	} else {
-		opts = badger.DefaultOptions(path)
-	}
-
+func NewBadgerBuffer(opts badger.Options) (*BadgerBuffer, error) {
 	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open badger: %w", err)

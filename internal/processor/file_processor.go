@@ -36,7 +36,7 @@ func (fp *FileProcessor) Start(ctx context.Context) {
 	defer ticker.Stop()
 	defer close(fp.done)
 
-	fp.logger.Info("starting file processor", "flush_interval", fp.flushInterval)
+	fp.logger.Info("starting file processor", "file_buffer_dir", fp.buffer.Dir, "flush_interval", fp.flushInterval)
 
 	for {
 		select {

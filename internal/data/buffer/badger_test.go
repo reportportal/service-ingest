@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +14,8 @@ import (
 
 func newTestBuffer(t *testing.T) *BadgerBuffer {
 	t.Helper()
-	buf, err := NewBadgerBuffer("")
+	opts := badger.DefaultOptions("").WithInMemory(true)
+	buf, err := NewBadgerBuffer(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		assert.NoError(t, buf.Close())

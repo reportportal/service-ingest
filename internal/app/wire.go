@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/reportportal/service-ingest/internal/config"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
 	"github.com/reportportal/service-ingest/internal/data/parquet"
@@ -55,7 +56,18 @@ func New(cfg *config.Config) (*App, error) {
 }
 
 func buildBuffer(cfg *config.Config) (buffer.Buffer, error) {
-	buf, err := buffer.NewBadgerBuffer(cfg.Storage.BufferPath)
+	var opts badger.Options
+	path := cfg.Buffer.BufferPath
+
+	if path == "" {
+		opts = badger.DefaultOptions("").WithInMemory(true)
+	} else {
+		opts = badger.DefaultOptions(path)
+	}
+
+	opts = opts.WithBlockCacheSize(cfg.Buffer.GetBufferCacheSize())
+
+	buf, err := buffer.NewBadgerBuffer(opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create buffer: %w", err)
 	}
@@ -63,7 +75,7 @@ func buildBuffer(cfg *config.Config) (buffer.Buffer, error) {
 }
 
 func buildFileBuffer(cfg *config.Config) buffer.FileBuffer {
-	return buffer.NewFileBuffer(cfg.Storage.FileBufferPath)
+	return buffer.NewFileBuffer(cfg.Buffer.FileBufferPath)
 }
 
 func buildWriter(cfg *config.Config) *parquet.Writer {
@@ -96,7 +108,7 @@ func buildServer(cfg *config.Config, handlers handler.Handlers) *http.Server {
 }
 
 func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, writer *parquet.Writer) (*processor.BatchProcessor, error) {
-	flushInterval, err := cfg.Batch.FlushIntervalDuration()
+	flushInterval, err := cfg.Processor.FlushIntervalDuration()
 	if err != nil {
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
 	}
@@ -105,18 +117,18 @@ func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, writer *parquet.
 		Buffer:        buf,
 		Writer:        writer,
 		FlushInterval: flushInterval,
-		ReadLimit:     cfg.Batch.ReadLimit,
+		ReadLimit:     cfg.Processor.ReadLimit,
 		Logger:        slog.Default(),
 	}), nil
 }
 
 func buildFileProcessor(cfg *config.Config, buffer buffer.FileBuffer) (*processor.FileProcessor, error) {
-	if filepath.Clean(cfg.Storage.FileBufferPath) == filepath.Clean(cfg.Storage.CatalogPath) {
+	if filepath.Clean(cfg.Buffer.FileBufferPath) == filepath.Clean(cfg.Storage.CatalogPath) {
 		slog.Info("file processor disabled: buffer equals catalog path")
 		return nil, nil
 	}
 
-	interval, err := cfg.Batch.FilesFlushIntervalDuration()
+	interval, err := cfg.Processor.FilesFlushIntervalDuration()
 	if err != nil {
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
 	}
