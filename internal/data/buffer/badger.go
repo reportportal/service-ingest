@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
@@ -18,7 +19,8 @@ const (
 )
 
 type BadgerBuffer struct {
-	db *badger.DB
+	db     *badger.DB
+	logger *slog.Logger
 }
 
 // NewBadgerBuffer creates a new BadgerBuffer
@@ -30,7 +32,8 @@ func NewBadgerBuffer(opts badger.Options) (*BadgerBuffer, error) {
 	}
 
 	return &BadgerBuffer{
-		db: db,
+		db:     db,
+		logger: slog.Default(),
 	}, nil
 }
 
@@ -102,9 +105,10 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 	return envelopes, err
 }
 
-// Stream
-// TODO: Consider to use a channel as a return value instead slice. Relevant for 100k+ events.
-func (b *BadgerBuffer) Stream(ctx context.Context) (envelops []EventEnvelope, err error) {
+func (b *BadgerBuffer) Stream(ctx context.Context) (<-chan EventEnvelope, <-chan error) {
+	ch := make(chan EventEnvelope, 1024)
+	errCh := make(chan error, 1)
+
 	stream := b.db.NewStream()
 	stream.Prefix = []byte(eventPrefix)
 
@@ -114,20 +118,29 @@ func (b *BadgerBuffer) Stream(ctx context.Context) (envelops []EventEnvelope, er
 			return err
 		}
 		for _, kv := range list.Kv {
-			var envelop EventEnvelope
-			if err := json.Unmarshal(kv.Value, &envelop); err != nil {
+			var envelope EventEnvelope
+			if err := json.Unmarshal(kv.Value, &envelope); err != nil {
+				b.logger.Warn("can't convert entry to envelope", "err", err)
 				continue
 			}
-			envelops = append(envelops, envelop)
+			select {
+			case ch <- envelope:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		}
 		return nil
 	}
 
-	if err := stream.Orchestrate(ctx); err != nil {
-		return nil, err
-	}
+	go func() {
+		defer close(ch)
+		if err := stream.Orchestrate(ctx); err != nil {
+			errCh <- err
+		}
+		close(errCh)
+	}()
 
-	return envelops, nil
+	return ch, errCh
 }
 
 func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {

@@ -157,6 +157,16 @@ func TestAck_EmptySlice(t *testing.T) {
 	assert.NoError(t, buf.Ack(ctx, nil))
 }
 
+func collectStream(t *testing.T, ch <-chan EventEnvelope, errCh <-chan error) []EventEnvelope {
+	t.Helper()
+	var envelopes []EventEnvelope
+	for e := range ch {
+		envelopes = append(envelopes, e)
+	}
+	require.NoError(t, <-errCh)
+	return envelopes
+}
+
 func TestStream_ReturnsAllEnvelopes(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
@@ -165,8 +175,8 @@ func TestStream_ReturnsAllEnvelopes(t *testing.T) {
 	mustPut(t, buf, ctx, newEnvelope(EntityTypeItem))
 	mustPut(t, buf, ctx, newEnvelope(EntityTypeLog))
 
-	envelopes, err := buf.Stream(ctx)
-	require.NoError(t, err)
+	ch, errCh := buf.Stream(ctx)
+	envelopes := collectStream(t, ch, errCh)
 	assert.Len(t, envelopes, 3)
 }
 
@@ -174,8 +184,8 @@ func TestStream_EmptyBuffer(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
 
-	envelopes, err := buf.Stream(ctx)
-	require.NoError(t, err)
+	ch, errCh := buf.Stream(ctx)
+	envelopes := collectStream(t, ch, errCh)
 	assert.Empty(t, envelopes)
 }
 
@@ -187,8 +197,8 @@ func TestStream_PreservesData(t *testing.T) {
 	original.Data = json.RawMessage(`{"name":"test-launch"}`)
 	mustPut(t, buf, ctx, original)
 
-	envelopes, err := buf.Stream(ctx)
-	require.NoError(t, err)
+	ch, errCh := buf.Stream(ctx)
+	envelopes := collectStream(t, ch, errCh)
 	require.Len(t, envelopes, 1)
 
 	assert.Equal(t, original.ID, envelopes[0].ID)
@@ -242,12 +252,11 @@ func TestLargeVolume_StreamWithAck(t *testing.T) {
 		mustPut(t, buf, ctx, newEnvelope(EntityTypeLog))
 	}
 
-	envelopes, err := buf.Stream(ctx)
-	require.NoError(t, err)
+	ch, errCh := buf.Stream(ctx)
+	envelopes := collectStream(t, ch, errCh)
 	assert.Len(t, envelopes, total)
 
-	err = buf.Ack(ctx, envelopes)
-	require.NoError(t, err)
+	require.NoError(t, buf.Ack(ctx, envelopes))
 	size, err := buf.Size(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 0, size)
