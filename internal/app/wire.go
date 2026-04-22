@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/apache/opendal-go-services/fs"
+	"github.com/apache/opendal-go-services/s3"
+	opendal "github.com/apache/opendal/bindings/go"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/reportportal/service-ingest/internal/config"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
@@ -19,24 +22,35 @@ import (
 )
 
 func New(cfg *config.Config) (*App, error) {
+	op, err := newStorageOperator(cfg)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			op.Close()
+		}
+	}()
+
 	buf, err := buildBuffer(cfg)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err != nil {
+			_ = buf.Close()
+		}
+	}()
 
 	fileBuf := buildFileBuffer(cfg)
 
-	writer := buildWriter(cfg)
-
-	batchProcessor, err := buildBatchProcessor(cfg, buf, writer)
+	batchProcessor, err := buildBatchProcessor(cfg, buf, op)
 	if err != nil {
-		_ = buf.Close()
 		return nil, err
 	}
 
-	fileProcessor, err := buildFileProcessor(cfg, fileBuf)
+	fileProcessor, err := buildFileProcessor(cfg, fileBuf, op)
 	if err != nil {
-		_ = buf.Close()
 		return nil, err
 	}
 
@@ -52,6 +66,7 @@ func New(cfg *config.Config) (*App, error) {
 		buffer:        buf,
 		ctx:           ctx,
 		cancel:        cancel,
+		operator:      op,
 	}, nil
 }
 
@@ -76,10 +91,6 @@ func buildBuffer(cfg *config.Config) (buffer.Buffer, error) {
 
 func buildFileBuffer(cfg *config.Config) buffer.FileBuffer {
 	return buffer.NewFileBuffer(cfg.Buffer.FileBufferPath)
-}
-
-func buildWriter(cfg *config.Config) *parquet.Writer {
-	return parquet.NewWriter(cfg.Storage.CatalogPath, cfg.Storage.ParquetCompression)
 }
 
 func buildHandlers(buf buffer.Buffer, staging buffer.FileBuffer) handler.Handlers {
@@ -107,7 +118,8 @@ func buildServer(cfg *config.Config, handlers handler.Handlers) *http.Server {
 	}
 }
 
-func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, writer *parquet.Writer) (*processor.BatchProcessor, error) {
+func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, operator *opendal.Operator) (*processor.BatchProcessor, error) {
+	writer := parquet.NewWriter(cfg.Storage.CatalogPath, cfg.Storage.ParquetCompression, operator)
 	flushInterval, err := cfg.Processor.FlushIntervalDuration()
 	if err != nil {
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
@@ -122,8 +134,8 @@ func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, writer *parquet.
 	}), nil
 }
 
-func buildFileProcessor(cfg *config.Config, buffer buffer.FileBuffer) (*processor.FileProcessor, error) {
-	if filepath.Clean(cfg.Buffer.FileBufferPath) == filepath.Clean(cfg.Storage.CatalogPath) {
+func buildFileProcessor(cfg *config.Config, buffer buffer.FileBuffer, operator *opendal.Operator) (*processor.FileProcessor, error) {
+	if cfg.Storage.Type == "fs" && filepath.Clean(cfg.Buffer.FileBufferPath) == filepath.Clean(cfg.Storage.CatalogPath) {
 		slog.Info("file processor disabled: buffer equals catalog path")
 		return nil, nil
 	}
@@ -133,5 +145,43 @@ func buildFileProcessor(cfg *config.Config, buffer buffer.FileBuffer) (*processo
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
 	}
 
-	return processor.NewFileProcessor(buffer, cfg.Storage.CatalogPath, interval), nil
+	return processor.NewFileProcessor(buffer, cfg.Storage.CatalogPath, interval, operator), nil
+}
+
+func newStorageOperator(cfg *config.Config) (*opendal.Operator, error) {
+	switch cfg.Storage.Type {
+	case "fs":
+		opts := opendal.OperatorOptions{"root": cfg.Storage.CatalogPath}
+		return opendal.NewOperator(fs.Scheme, opts)
+	case "s3":
+		return opendal.NewOperator(s3.Scheme, s3Options(cfg))
+	default:
+		return nil, fmt.Errorf("unsupported storage type: %s", cfg.Storage.Type)
+	}
+}
+
+func s3Options(cfg *config.Config) opendal.OperatorOptions {
+	opts := opendal.OperatorOptions{
+		"root":   cfg.Storage.CatalogPath,
+		"bucket": cfg.S3.Bucket,
+	}
+
+	if cfg.S3.Region != "" {
+		opts["region"] = cfg.S3.Region
+	}
+
+	if cfg.S3.Endpoint != "" {
+		opts["endpoint"] = cfg.S3.Endpoint
+	}
+
+	if cfg.S3.AccessKey != "" {
+		opts["access_key_id"] = cfg.S3.AccessKey
+		opts["secret_access_key"] = cfg.S3.SecretKey
+	}
+
+	if cfg.S3.SessionToken != "" {
+		opts["session_token"] = cfg.S3.SessionToken
+	}
+
+	return opts
 }

@@ -11,6 +11,7 @@ type Config struct {
 	Server    ServerConfig
 	Log       LogConfig
 	Storage   StorageConfig
+	S3        S3Config
 	Processor ProcessorConfig
 	Buffer    BufferConfig
 }
@@ -31,9 +32,19 @@ type LogConfig struct {
 }
 
 type StorageConfig struct {
+	Type                string `env:"STORAGE_TYPE" envDefault:"fs"`
 	CatalogPath         string `env:"CATALOG_PATH" envDefault:"/data/catalog"`
 	ParquetCompression  string `env:"PARQUET_COMPRESSION" envDefault:"snappy"`
 	ParquetRowGroupSize int    `env:"PARQUET_ROW_GROUP_SIZE" envDefault:"1000"`
+}
+
+type S3Config struct {
+	Bucket       string `env:"S3_BUCKET"`
+	Region       string `env:"S3_REGION"`
+	Endpoint     string `env:"S3_ENDPOINT"`
+	AccessKey    string `env:"S3_ACCESS_KEY"`
+	SecretKey    string `env:"S3_SECRET_KEY"`
+	SessionToken string `env:"S3_SESSION_TOKEN"`
 }
 
 func Load() (*Config, error) {
@@ -59,6 +70,10 @@ func Load() (*Config, error) {
 
 	if err := env.Parse(&cfg.Buffer); err != nil {
 		return nil, fmt.Errorf("failed to parse buffer config: %w", err)
+	}
+
+	if err := env.Parse(&cfg.S3); err != nil {
+		return nil, fmt.Errorf("failed to parse s3 config: %w", err)
 	}
 
 	return cfg, nil

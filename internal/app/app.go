@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	opendal "github.com/apache/opendal/bindings/go"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
 	"github.com/reportportal/service-ingest/internal/processor"
 )
@@ -22,6 +23,7 @@ type App struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	fileProcessor *processor.FileProcessor
+	operator      *opendal.Operator
 }
 
 func (a *App) Run() error {
@@ -80,6 +82,8 @@ func (a *App) Shutdown() error {
 			slog.Warn("file processor shutdown timeout")
 		}
 	}
+
+	a.operator.Close()
 
 	if err := a.buffer.Close(); err != nil {
 		slog.Error("buffer close error", "error", err)

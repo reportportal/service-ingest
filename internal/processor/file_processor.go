@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	opendal "github.com/apache/opendal/bindings/go"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
 )
 
@@ -17,16 +18,18 @@ type FileProcessor struct {
 	catalogDir    string
 	flushInterval time.Duration
 	logger        *slog.Logger
+	operator      *opendal.Operator
 
 	done chan struct{}
 }
 
-func NewFileProcessor(fileBuffer buffer.FileBuffer, dir string, flushInterval time.Duration) *FileProcessor {
+func NewFileProcessor(fileBuffer buffer.FileBuffer, dir string, flushInterval time.Duration, operator *opendal.Operator) *FileProcessor {
 	return &FileProcessor{
 		buffer:        fileBuffer,
 		catalogDir:    dir,
 		flushInterval: flushInterval,
 		logger:        slog.Default(),
+		operator:      operator,
 		done:          make(chan struct{}),
 	}
 }

@@ -47,6 +47,7 @@ func main() {
 		slog.String("log_htpp_level", cfg.Log.HTTPLevel),
 		slog.String("address", cfg.Server.Address),
 		slog.String("buffer_size", cfg.Buffer.BufferCacheSize),
+		slog.String("storage_type", cfg.Storage.Type),
 	)
 
 	if err := server.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {

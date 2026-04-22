@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	opendal "github.com/apache/opendal/bindings/go"
 	"github.com/parquet-go/parquet-go/compress"
 	"github.com/parquet-go/parquet-go/compress/gzip"
 	"github.com/parquet-go/parquet-go/compress/snappy"
@@ -16,12 +17,14 @@ import (
 type Writer struct {
 	BasePath    string
 	compression string
+	operator    *opendal.Operator
 }
 
-func NewWriter(basePath string, compression string) *Writer {
+func NewWriter(basePath string, compression string, operator *opendal.Operator) *Writer {
 	return &Writer{
 		BasePath:    basePath,
 		compression: compression,
+		operator:    operator,
 	}
 }
 
