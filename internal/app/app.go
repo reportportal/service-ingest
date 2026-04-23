@@ -83,8 +83,10 @@ func (a *App) Shutdown() error {
 		}
 	}
 
+	//TODO: add check for waiting processor's shutdown done.
 	a.operator.Close()
 
+	//TODO: add check for waiting processor's shutdown done.
 	if err := a.buffer.Close(); err != nil {
 		slog.Error("buffer close error", "error", err)
 		return err

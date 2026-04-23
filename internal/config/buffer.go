@@ -17,7 +17,7 @@ type BufferConfig struct {
 func (b *BufferConfig) GetBufferCacheSize() int64 {
 	size, err := humanize.ParseBytes(b.BufferCacheSize)
 	if err != nil {
-		slog.Warn("invalid buffer cache size %q, using default 256MiB", b.BufferCacheSize)
+		slog.Warn("invalid buffer cache size, using default 256MiB", "value", b.BufferCacheSize, "error", err)
 		return 256 << 20
 	}
 	return int64(size)

@@ -2,8 +2,7 @@ package parquet
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"path"
 
 	opendal "github.com/apache/opendal/bindings/go"
 	"github.com/parquet-go/parquet-go/compress"
@@ -15,64 +14,61 @@ import (
 )
 
 type Writer struct {
-	BasePath    string
-	compression string
-	operator    *opendal.Operator
+	codec    compress.Codec
+	operator *opendal.Operator
 }
 
-func NewWriter(basePath string, compression string, operator *opendal.Operator) *Writer {
+func NewWriter(compression string, operator *opendal.Operator) *Writer {
 	return &Writer{
-		BasePath:    basePath,
-		compression: compression,
-		operator:    operator,
+		codec:    getCompressionCodec(compression),
+		operator: operator,
 	}
 }
 
-func (w *Writer) GetBasePath() string {
-	return w.BasePath
-}
-
-func (w *Writer) Write(entityType buffer.EntityType, path string, events []buffer.EventEnvelope) error {
+func (w *Writer) Write(entityType buffer.EntityType, dir string, events []buffer.EventEnvelope) error {
 	if len(events) == 0 {
 		return nil
 	}
 
-	fullPath := filepath.Join(w.BasePath, path)
-
-	if err := os.MkdirAll(fullPath, 0755); err != nil {
-		return fmt.Errorf("failed to create directory %s: %w", fullPath, err)
-	}
-
 	// TODO: Implement partitioning logic if needed
-	parquetFile := filepath.Join(fullPath, "part-00000.parquet")
+	parquetPath := path.Join(dir, "part-00000.parquet")
 
-	switch entityType {
-	case buffer.EntityTypeLaunch:
-		if err := w.writeLaunchEvents(parquetFile, events); err != nil {
-			return err
-		}
-	case buffer.EntityTypeItem:
-		if err := w.writeItemEvents(parquetFile, events); err != nil {
-			return err
-		}
-	case buffer.EntityTypeLog:
-		if err := w.writeLogEvents(parquetFile, events); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("unknown entity type: %s", entityType)
+	if err := w.writeParquet(parquetPath, entityType, events); err != nil {
+		return fmt.Errorf("failed to write parquet file: %w", err)
 	}
 
-	successFile := filepath.Join(fullPath, "_SUCCESS")
-	if err := os.WriteFile(successFile, []byte{}, 0644); err != nil {
+	if err := w.operator.Write(path.Join(dir, "_SUCCESS"), []byte{}); err != nil {
 		return fmt.Errorf("failed to create _SUCCESS marker: %w", err)
 	}
 
 	return nil
 }
 
-func (w *Writer) getCompressionCodec() compress.Codec {
-	switch w.compression {
+func (w *Writer) writeParquet(parquetPath string, entityType buffer.EntityType, events []buffer.EventEnvelope) (err error) {
+	writer, err := w.operator.Writer(parquetPath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := writer.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("failed to close parquet writer: %w", closeErr)
+		}
+	}()
+
+	switch entityType {
+	case buffer.EntityTypeLaunch:
+		return w.writeLaunchEvents(writer, events)
+	case buffer.EntityTypeItem:
+		return w.writeItemEvents(writer, events)
+	case buffer.EntityTypeLog:
+		return w.writeLogEvents(writer, events)
+	default:
+		return fmt.Errorf("unknown entity type: %s", entityType)
+	}
+}
+
+func getCompressionCodec(codec string) compress.Codec {
+	switch codec {
 	case "snappy":
 		return &snappy.Codec{}
 	case "gzip":

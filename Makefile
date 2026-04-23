@@ -25,6 +25,9 @@ build:
 	echo "Build Time: $(BUILD_TIME)"
 	go build $(LDFLAGS) -o bin/ingest ./cmd/ingest
 
+# Run tests
+test:
+	go test ./...
 # Clean build artifacts
 clean:
 	rm -rf bin/

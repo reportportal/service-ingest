@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/apache/opendal-go-services/fs"
+	opendal "github.com/apache/opendal/bindings/go"
 	"github.com/google/uuid"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
 	"github.com/reportportal/service-ingest/internal/data/catalog"
@@ -66,16 +68,22 @@ func newTestEnvelope(id string, entityType buffer.EntityType, projectKey, launch
 	}
 }
 
-func newProcessor(t *testing.T, buf buffer.Buffer) *BatchProcessor {
+func newProcessor(t *testing.T, buf buffer.Buffer) (*BatchProcessor, string) {
 	t.Helper()
-	writer := parquet.NewWriter(t.TempDir(), "snappy")
-	return NewBatchProcessor(BatchProcessorOptions{
+	tmpDir := t.TempDir()
+	op, err := opendal.NewOperator(fs.Scheme, opendal.OperatorOptions{"root": tmpDir})
+	require.NoError(t, err)
+	t.Cleanup(op.Close)
+
+	writer := parquet.NewWriter("snappy", op)
+	bp := NewBatchProcessor(BatchProcessorOptions{
 		Buffer:        buf,
 		Writer:        writer,
 		FlushInterval: time.Second,
 		ReadLimit:     100,
 		Logger:        slog.Default(),
 	})
+	return bp, tmpDir
 }
 
 func TestProcessBatch_CancelledContext(t *testing.T) {
@@ -83,7 +91,7 @@ func TestProcessBatch_CancelledContext(t *testing.T) {
 	cancel()
 
 	buf := &mockBuffer{}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(ctx)
 	assert.ErrorIs(t, err, context.Canceled)
@@ -95,7 +103,7 @@ func TestProcessBatch_SizeError(t *testing.T) {
 			return 0, errors.New("buffer unavailable")
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	assert.ErrorContains(t, err, "failed to get buffer size")
@@ -107,7 +115,7 @@ func TestProcessBatch_EmptyBuffer(t *testing.T) {
 			return 0, nil
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	assert.NoError(t, err)
@@ -122,7 +130,7 @@ func TestProcessBatch_ReadError(t *testing.T) {
 			return nil, errors.New("read failed")
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	assert.ErrorContains(t, err, "failed to read from buffer")
@@ -137,7 +145,7 @@ func TestProcessBatch_ReadReturnsEmpty(t *testing.T) {
 			return []buffer.EventEnvelope{}, nil
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	assert.NoError(t, err)
@@ -162,7 +170,7 @@ func TestProcessBatch_Ack(t *testing.T) {
 			return nil
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	require.NoError(t, err)
@@ -185,7 +193,7 @@ func TestProcessBatch_AckError(t *testing.T) {
 			return errors.New("ack failed")
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, _ := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	assert.ErrorContains(t, err, "failed to ack events")
@@ -209,14 +217,14 @@ func TestProcessBatch_WritesParquetFiles(t *testing.T) {
 			return nil
 		},
 	}
-	bp := newProcessor(t, buf)
+	bp, tmpDir := newProcessor(t, buf)
 
 	err := bp.processBatch(context.Background())
 	require.NoError(t, err)
 
 	for _, event := range events {
 		path := filepath.Join(
-			bp.writer.BasePath,
+			tmpDir,
 			catalog.BuildPath(
 				event.ProjectKey,
 				event.LaunchUUID,

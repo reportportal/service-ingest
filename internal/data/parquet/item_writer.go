@@ -3,6 +3,7 @@ package parquet
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/parquet-go/parquet-go"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
@@ -10,7 +11,7 @@ import (
 	"github.com/reportportal/service-ingest/internal/model"
 )
 
-func (w *Writer) writeItemEvents(filename string, events []buffer.EventEnvelope) error {
+func (w *Writer) writeItemEvents(ow io.Writer, events []buffer.EventEnvelope) error {
 	rows := make([]scheme.ItemEvent, 0, len(events))
 
 	for _, event := range events {
@@ -23,9 +24,11 @@ func (w *Writer) writeItemEvents(filename string, events []buffer.EventEnvelope)
 		rows = append(rows, row)
 	}
 
-	return parquet.WriteFile(
-		filename,
-		rows,
-		parquet.Compression(w.getCompressionCodec()),
-	)
+	pw := parquet.NewGenericWriter[scheme.ItemEvent](ow, parquet.Compression(w.codec))
+	if _, err := pw.Write(rows); err != nil {
+		_ = pw.Close()
+		return fmt.Errorf("failed to write item events: %w", err)
+	}
+
+	return pw.Close()
 }

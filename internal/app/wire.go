@@ -119,7 +119,7 @@ func buildServer(cfg *config.Config, handlers handler.Handlers) *http.Server {
 }
 
 func buildBatchProcessor(cfg *config.Config, buf buffer.Buffer, operator *opendal.Operator) (*processor.BatchProcessor, error) {
-	writer := parquet.NewWriter(cfg.Storage.CatalogPath, cfg.Storage.ParquetCompression, operator)
+	writer := parquet.NewWriter(cfg.Storage.ParquetCompression, operator)
 	flushInterval, err := cfg.Processor.FlushIntervalDuration()
 	if err != nil {
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
@@ -145,7 +145,7 @@ func buildFileProcessor(cfg *config.Config, buffer buffer.FileBuffer, operator *
 		return nil, fmt.Errorf("invalid flush interval: %w", err)
 	}
 
-	return processor.NewFileProcessor(buffer, cfg.Storage.CatalogPath, interval, operator), nil
+	return processor.NewFileProcessor(buffer, interval, operator), nil
 }
 
 func newStorageOperator(cfg *config.Config) (*opendal.Operator, error) {

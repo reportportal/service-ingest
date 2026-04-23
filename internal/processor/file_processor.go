@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 
 type FileProcessor struct {
 	buffer        buffer.FileBuffer
-	catalogDir    string
 	flushInterval time.Duration
 	logger        *slog.Logger
 	operator      *opendal.Operator
@@ -23,10 +21,9 @@ type FileProcessor struct {
 	done chan struct{}
 }
 
-func NewFileProcessor(fileBuffer buffer.FileBuffer, dir string, flushInterval time.Duration, operator *opendal.Operator) *FileProcessor {
+func NewFileProcessor(fileBuffer buffer.FileBuffer, flushInterval time.Duration, operator *opendal.Operator) *FileProcessor {
 	return &FileProcessor{
 		buffer:        fileBuffer,
-		catalogDir:    dir,
 		flushInterval: flushInterval,
 		logger:        slog.Default(),
 		operator:      operator,
@@ -87,40 +84,38 @@ func (fp *FileProcessor) Flush(ctx context.Context) (err error) {
 }
 
 func (fp *FileProcessor) move(f string) error {
-	dir, file := filepath.Split(f)
-	dir = filepath.Clean(dir)
-	destDir := filepath.Join(fp.catalogDir, dir)
-	destFile := filepath.Join(destDir, file)
-
-	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return fmt.Errorf("create directory %s: %w", destDir, err)
-	}
-
 	src, err := fp.buffer.Read(f)
 	if err != nil {
 		return fmt.Errorf("read file %s from buffer: %w", f, err)
 	}
 	defer src.Close()
 
-	tmp, err := os.CreateTemp(destDir, "move-*")
-	if err != nil {
-		return fmt.Errorf("create temporary file: %w", err)
-	}
-	defer tmp.Close()
-
-	if _, err := io.Copy(tmp, src); err != nil {
-		_ = os.Remove(tmp.Name())
-		return fmt.Errorf("write to temp file: %w", err)
-	}
-
-	if err := os.Rename(tmp.Name(), destFile); err != nil {
-		_ = os.Remove(tmp.Name())
-		return fmt.Errorf("rename file %s to %s: %w", tmp.Name(), destFile, err)
+	if err := fp.upload(f, src); err != nil {
+		return err
 	}
 
 	if err := fp.buffer.Delete(f); err != nil {
 		return fmt.Errorf("delete buffer file %s: %w", f, err)
 	}
 
+	return nil
+}
+
+func (fp *FileProcessor) upload(f string, src io.Reader) (err error) {
+	path := filepath.ToSlash(f)
+
+	writer, err := fp.operator.Writer(path)
+	if err != nil {
+		return fmt.Errorf("create file %s writer: %w", f, err)
+	}
+	defer func() {
+		if closeErr := writer.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("failed to close file writer: %w", closeErr)
+		}
+	}()
+
+	if _, err := io.Copy(writer, src); err != nil {
+		return fmt.Errorf("copy file %s to %s: %w", f, path, err)
+	}
 	return nil
 }
