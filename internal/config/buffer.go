@@ -11,7 +11,7 @@ type BufferConfig struct {
 	BufferCacheSize string `env:"BUFFER_CACHE_SIZE" envDefault:"256MiB"`
 	BufferIndexSize string `env:"BUFFER_INDEX_SIZE"`
 
-	FileBufferPath string `env:"FILE_BUFFER_PATH,expand" envDefault:"$CATALOG_PATH"`
+	FileBufferPath string `env:"FILE_BUFFER_PATH,expand" envDefault:"/data/staging"`
 }
 
 func (b *BufferConfig) GetBufferCacheSize() int64 {
