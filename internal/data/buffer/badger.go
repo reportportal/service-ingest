@@ -3,20 +3,14 @@ package buffer
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/dgraph-io/ristretto/v2/z"
-	"github.com/google/uuid"
 )
 
-const (
-	eventPrefix = "event:"
-	leasePrefix = "_lease:"
-)
+const eventPrefix = "event:"
 
 type BadgerBuffer struct {
 	db     *badger.DB
@@ -61,8 +55,6 @@ func (b *BadgerBuffer) Put(ctx context.Context, envelope EventEnvelope) error {
 // Read
 // TODO: Consider option to read by EventEnvelope.EntityType
 func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEnvelope, err error) {
-	readID := uuid.New().String()
-
 	err = b.db.Update(func(txn *badger.Txn) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -82,18 +74,6 @@ func (b *BadgerBuffer) Read(ctx context.Context, limit int) (envelopes []EventEn
 				return json.Unmarshal(val, &envelope)
 			}); err != nil {
 				continue
-			}
-
-			leaseKey := getLeaseKey(envelope)
-			if _, err := txn.Get(leaseKey); err == nil {
-				continue
-			} else if !errors.Is(err, badger.ErrKeyNotFound) {
-				return err
-			}
-
-			entry := badger.NewEntry(leaseKey, []byte(readID)).WithTTL(30 * time.Second)
-			if err := txn.SetEntry(entry); err != nil {
-				return fmt.Errorf("failed set lease for envelop %v: %w", envelope.ID, err)
 			}
 
 			envelopes = append(envelopes, envelope)
@@ -158,33 +138,9 @@ func (b *BadgerBuffer) Ack(ctx context.Context, events []EventEnvelope) error {
 		if err := wb.Delete(envelope.BufferKey); err != nil {
 			return fmt.Errorf("failed to delete envelope %s: %w", envelope.ID, err)
 		}
-		// TODO: Remove if use only streams for reading
-		if err := wb.Delete(getLeaseKey(envelope)); err != nil {
-			return fmt.Errorf("failed to delete lease %s: %w", envelope.ID, err)
-		}
 	}
 
 	return wb.Flush()
-}
-
-func (b *BadgerBuffer) Release(ctx context.Context, events []EventEnvelope) error {
-	if len(events) == 0 {
-		return nil
-	}
-
-	return b.db.Update(func(txn *badger.Txn) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-
-		for _, envelope := range events {
-			if err := txn.Delete(getLeaseKey(envelope)); err != nil {
-				return fmt.Errorf("failed to release envelop %s: %w", envelope.ID, err)
-			}
-		}
-
-		return nil
-	})
 }
 
 func (b *BadgerBuffer) Size(ctx context.Context) (counter int, err error) {
@@ -217,8 +173,4 @@ func buildKey(envelope EventEnvelope) []byte {
 		envelope.Timestamp.UnixNano(),
 		envelope.ID,
 	)
-}
-
-func getLeaseKey(envelope EventEnvelope) []byte {
-	return append([]byte(leasePrefix), envelope.BufferKey...)
 }

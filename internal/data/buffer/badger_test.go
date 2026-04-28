@@ -77,21 +77,6 @@ func TestRead_RespectsLimit(t *testing.T) {
 	assert.Len(t, envelopes, 3)
 }
 
-func TestRead_DoesNotReturnLeasedItems(t *testing.T) {
-	buf := newTestBuffer(t)
-	ctx := context.Background()
-
-	mustPut(t, buf, ctx, newEnvelope(EntityTypeLaunch))
-
-	first, err := buf.Read(ctx, 10)
-	require.NoError(t, err)
-	require.Len(t, first, 1)
-
-	second, err := buf.Read(ctx, 10)
-	require.NoError(t, err)
-	assert.Empty(t, second)
-}
-
 func TestAck_DeletesItem(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
@@ -106,22 +91,6 @@ func TestAck_DeletesItem(t *testing.T) {
 	counter, err := buf.Size(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 0, counter)
-}
-
-func TestRelease_MakesItemAvailableAgain(t *testing.T) {
-	buf := newTestBuffer(t)
-	ctx := context.Background()
-
-	mustPut(t, buf, ctx, newEnvelope(EntityTypeLaunch))
-
-	envelopes, err := buf.Read(ctx, 10)
-	require.NoError(t, err)
-
-	require.NoError(t, buf.Release(ctx, envelopes))
-
-	envelopes2, err := buf.Read(ctx, 10)
-	require.NoError(t, err)
-	assert.Len(t, envelopes2, 1)
 }
 
 func TestSize_ReflectsOnlyUnacked(t *testing.T) {
@@ -212,8 +181,8 @@ func TestLargeVolume_ReadWithAck(t *testing.T) {
 	buf := newTestBuffer(t)
 	ctx := context.Background()
 
-	const totalPuts = 100000
-	const readLimit = 10000
+	const totalPuts = 400000
+	const readLimit = 200000
 
 	for range totalPuts {
 		e := newEnvelope(EntityTypeItem)

@@ -20,11 +20,10 @@ import (
 )
 
 type mockBuffer struct {
-	sizeFunc    func(ctx context.Context) (int, error)
-	readFunc    func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error)
-	streamFunc  func(ctx context.Context) (<-chan buffer.EventEnvelope, <-chan error)
-	ackFunc     func(ctx context.Context, events []buffer.EventEnvelope) error
-	releaseFunc func(ctx context.Context, events []buffer.EventEnvelope) error
+	sizeFunc   func(ctx context.Context) (int, error)
+	readFunc   func(ctx context.Context, limit int) ([]buffer.EventEnvelope, error)
+	streamFunc func(ctx context.Context) (<-chan buffer.EventEnvelope, <-chan error)
+	ackFunc    func(ctx context.Context, events []buffer.EventEnvelope) error
 }
 
 func (m *mockBuffer) Put(_ context.Context, _ buffer.EventEnvelope) error {
@@ -45,10 +44,6 @@ func (m *mockBuffer) Stream(ctx context.Context) (<-chan buffer.EventEnvelope, <
 
 func (m *mockBuffer) Ack(ctx context.Context, events []buffer.EventEnvelope) error {
 	return m.ackFunc(ctx, events)
-}
-
-func (m *mockBuffer) Release(ctx context.Context, events []buffer.EventEnvelope) error {
-	return m.releaseFunc(ctx, events)
 }
 
 func (m *mockBuffer) Close() error {
