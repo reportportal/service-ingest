@@ -205,9 +205,9 @@ picked up automatically — see `.env.example`). Defaults are listed in parenthe
 
 ### Processors
 
-- `FLUSH_INTERVAL` (`30s`) — how often `BatchProcessor` drains the event buffer into Parquet.
+- `FLUSH_INTERVAL` (`10s`) — how often `BatchProcessor` drains the event buffer into Parquet.
 - `FILES_FLUSH_INTERVAL` (`10s`) — how often `FileProcessor` uploads staged attachments.
-- `READ_LIMIT` (`1000`) — max events read from the buffer per flush.
+- `READ_LIMIT` (`100000`) — max events read from the buffer per flush.
 
 ## Non-goals
 

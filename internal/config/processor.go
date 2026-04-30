@@ -3,9 +3,9 @@ package config
 import "time"
 
 type ProcessorConfig struct {
-	FlushInterval      string `env:"FLUSH_INTERVAL" envDefault:"30s"`
+	FlushInterval      string `env:"FLUSH_INTERVAL" envDefault:"10s"`
 	FilesFlushInterval string `env:"FILES_FLUSH_INTERVAL" envDefault:"10s"`
-	ReadLimit          int    `env:"READ_LIMIT" envDefault:"1000"`
+	ReadLimit          int    `env:"READ_LIMIT" envDefault:"100000"`
 }
 
 func (s ProcessorConfig) FlushIntervalDuration() (time.Duration, error) {
