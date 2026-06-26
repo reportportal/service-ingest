@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/nrednav/cuid2"
 	"github.com/reportportal/service-ingest/internal/data/buffer"
 	"github.com/reportportal/service-ingest/internal/data/catalog"
 	"github.com/reportportal/service-ingest/internal/data/parquet"
@@ -96,7 +97,7 @@ func (bp *BatchProcessor) processBatch(ctx context.Context) (err error) {
 
 	bp.logger.Debug("read events from buffer", "count", len(events))
 
-	batchID := fmt.Sprintf("%d", time.Now().UnixMilli())
+	batchID := cuid2.Generate()
 	groups := bp.group(events)
 
 	bp.logger.Debug("grouped events", "groups", len(groups))

@@ -117,11 +117,18 @@ flowchart TD
 Parquet files are placed under a Hive-style partitioned path:
 
 ```
-project=<name>/launch_uuid=<uuid>/events/entity=<launch|item|log>/event_date=<YYYY-MM-DD>/batch_id=<ts>/
+project=<name>/launch_uuid=<uuid>/events/entity=<launch|item|log>/event_date=<YYYY-MM-DD>/batch_id=<cuid2>/
 ```
 
 This layout lets DuckDB, Spark, Trino, etc. read the dataset directly with predicate pushdown on
 project / launch / entity / date.
+
+`batch_id` is an opaque [CUID2](https://github.com/nrednav/cuid2) value that only disambiguates
+concurrent flushes — it is **not** time-ordered. Readers must treat it as an opaque partition key:
+do not parse it or rely on lexical/temporal ordering. Datasets written before the switch to CUID2
+may contain legacy timestamp-shaped `batch_id` values (`<ts>-<seq>`); both formats coexist within a
+date partition and are read transparently by globbing the `batch_id=*` partitions, so no migration
+of existing data is required.
 
 ### File path (log attachments)
 

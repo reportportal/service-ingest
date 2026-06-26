@@ -6,7 +6,9 @@ import (
 )
 
 // BuildPath constructs the partitioned path for Parquet files
-// Format: project_id=<uuid>/launch_id=<uuid>/events/entity=<type>/event_date=<date>/batch_id=<ts>-<seq>/
+// Format: project_id=<uuid>/launch_id=<uuid>/events/entity=<type>/event_date=<date>/batch_id=<cuid2>/
+//
+// batch_id is an opaque CUID2 identifier (collision-resistant, not time-ordered).
 func BuildPath(projectID, launchID, entityType, eventDate, batchID string) string {
 	return filepath.Join(
 		fmt.Sprintf("project=%s", projectID),

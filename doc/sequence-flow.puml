@@ -89,7 +89,7 @@ Group by:
 - event_date
 end note
 
-Processor -> Processor: Generate batch_id:\n<timestamp>-<seq>
+Processor -> Processor: Generate batch_id:\nCUID2 (opaque, not ordered)
 
 loop For each batch group
 
